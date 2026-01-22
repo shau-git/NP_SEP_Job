@@ -1,0 +1,142 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  user_id Int     @id @default(autoincrement()) @db.SmallInt
+  name    String  @db.VarChar(50)
+  image String? 
+  email   String  @unique @db.VarChar(65)
+  password String? @db.VarChar(255)
+  summary String? @db.VarChar(500)
+  skills  Skill[]
+  experiences Experience[]
+  educations  Education[]
+  company_members  CompanyMember[]
+  job_applicants JobApplicant[]
+  notification Notification[]
+  @@map("user")
+}
+
+model Skill {
+  skill_id Int  @id @default(autoincrement()) @db.SmallInt
+  user_id Int   @db.SmallInt
+  skill String @db.VarChar(30)
+  level String @db.VarChar(12)
+  user User @relation(fields: [user_id], references: [user_id])
+  @@map("skill")
+}
+
+model Experience {
+  experience_id Int  @id @default(autoincrement()) @db.SmallInt
+  user_id Int   @db.SmallInt
+  company String @db.VarChar(30)
+  role String @db.VarChar(30)
+  years String @db.VarChar(3)
+  start_date DateTime @db.Date
+  end_date String
+  employement_type String @db.VarChar(9)
+  description String @db.VarChar(500)
+  user User @relation(fields: [user_id], references: [user_id])
+  @@map("experience")
+}
+
+
+model Education {
+  education_id Int  @id @default(autoincrement()) @db.SmallInt
+  user_id Int   @db.SmallInt
+  institution String @db.VarChar(30)
+  fieldOfStudy String @db.VarChar(30)
+  qualification String @db.VarChar(16)
+  start_date DateTime @db.Date
+  end_date DateTime @db.Date
+  description String @db.VarChar(500)
+  study_type String @db.VarChar(9)
+  user User @relation(fields: [user_id], references: [user_id])
+  @@map("education")
+}
+
+
+
+model Company {
+  company_id Int     @id @default(autoincrement()) @db.SmallInt
+  name    String  @db.VarChar(50)
+  image String? 
+  industry String  @db.VarChar(20)
+  location String  @db.VarChar(50)
+  description String? @db.VarChar(500)
+  company_members  CompanyMember[]
+  job_posts JobPost[]
+  @@map("company")
+}
+
+
+model CompanyMember {
+  company_member_id Int     @id @default(autoincrement()) @db.SmallInt
+  company_id Int   @db.SmallInt
+  user_id Int   @db.SmallInt
+  // role String  @db.VarChar(30)
+  removed Boolean @default(false)
+  user User @relation(fields: [user_id], references: [user_id])
+  company Company @relation(fields: [company_id], references: [company_id])
+  @@map("company_member")
+}
+
+model JobPost {
+  job_post_id Int     @id @default(autoincrement()) @db.SmallInt
+  company_id Int   @db.SmallInt
+  title String  @db.VarChar(30)
+  requirements String[]
+  responsibilities String[]
+  employment_type String  @db.VarChar(9)
+  experience String @db.VarChar(3)
+  created_at DateTime @db.Date
+  removed Boolean @default(false)
+  salary_start Int   @db.SmallInt
+  salary_end Int   @db.SmallInt
+  location String @db.VarChar(6)
+  benefit String[]
+  job_applicants JobApplicant[]
+  company Company @relation(fields: [company_id], references: [company_id])
+  @@map("job_post")
+}
+
+
+model JobApplicant {
+  applicant_id Int  @id @default(autoincrement()) @db.SmallInt
+  user_id Int   @db.SmallInt
+  job_post_id Int   @db.SmallInt
+  status String  @db.VarChar(10) @default("PENDING")
+  expected_salary Int   @db.SmallInt
+  applied_date DateTime @db.Date
+  interview_date DateTime? @db.Date 
+  interview_time String? @db.VarChar(7)
+  user User @relation(fields: [user_id], references: [user_id])
+  job_post JobPost @relation(fields: [job_post_id], references: [job_post_id])
+  @@map("job_applicant")
+}
+
+
+model Notification {
+  notification_id Int   @id @default(autoincrement()) @db.SmallInt
+  user_id Int   @db.SmallInt
+  type String  @db.VarChar(9)
+  message String  @db.VarChar(100)
+  is_read Boolean @default(false)
+  created_at DateTime @db.Date
+  user User @relation(fields: [user_id], references: [user_id])
+  @@map("notification")
+}
+
