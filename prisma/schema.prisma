@@ -47,7 +47,7 @@ model Experience {
   years String @db.VarChar(3)
   start_date DateTime @db.Date
   end_date String
-  employement_type String @db.VarChar(9)
+  employment_type String @db.VarChar(9)
   description String @db.VarChar(500)
   user User @relation(fields: [user_id], references: [user_id])
   @@map("experience")
@@ -57,11 +57,11 @@ model Experience {
 model Education {
   education_id Int  @id @default(autoincrement()) @db.SmallInt
   user_id Int   @db.SmallInt
-  institution String @db.VarChar(30)
+  institution String @db.VarChar(50)
   fieldOfStudy String @db.VarChar(30)
   qualification String @db.VarChar(16)
   start_date DateTime @db.Date
-  end_date DateTime @db.Date
+  end_date String
   description String @db.VarChar(500)
   study_type String @db.VarChar(9)
   user User @relation(fields: [user_id], references: [user_id])
@@ -87,7 +87,7 @@ model CompanyMember {
   company_member_id Int     @id @default(autoincrement()) @db.SmallInt
   company_id Int   @db.SmallInt
   user_id Int   @db.SmallInt
-  // role String  @db.VarChar(30)
+  role String  @db.VarChar(6)
   removed Boolean @default(false)
   user User @relation(fields: [user_id], references: [user_id])
   company Company @relation(fields: [company_id], references: [company_id])
@@ -108,6 +108,7 @@ model JobPost {
   salary_end Int   @db.SmallInt
   location String @db.VarChar(6)
   benefit String[]
+  contact_email String @db.VarChar(65)
   job_applicants JobApplicant[]
   company Company @relation(fields: [company_id], references: [company_id])
   @@map("job_post")
@@ -129,14 +130,42 @@ model JobApplicant {
 }
 
 
+// model Notification {
+//   notification_id Int   @id @default(autoincrement()) @db.SmallInt
+//   user_id Int   @db.SmallInt
+//   type String  @db.VarChar(9)
+//   message String  @db.VarChar(300)
+//   is_read Boolean @default(false)
+//   created_at DateTime @db.Date
+//   user User @relation(fields: [user_id], references: [user_id])
+//   @@map("notification")
+// }
+
+
 model Notification {
-  notification_id Int   @id @default(autoincrement()) @db.SmallInt
-  user_id Int   @db.SmallInt
-  type String  @db.VarChar(9)
-  message String  @db.VarChar(100)
+  notification_id Int      @id @default(autoincrement())
+  user_id         Int      // Receiver
+  sender_id       Int?     // Triggering User (Colleague or Applicant) the sender's user_id
+  company_id      Int?     // Triggering Company (Logo source)
+  job_post_id     Int?     // Context for Job Title
+  type            String
+  message         String
+  created_at      DateTime @default(now())
   is_read Boolean @default(false)
-  created_at DateTime @db.Date
-  user User @relation(fields: [user_id], references: [user_id])
-  @@map("notification")
+  user       User     @relation("Receiver", fields: [user_id], references: [user_id])
+  sender     User?    @relation("Sender", fields: [sender_id], references: [user_id])
+  company    Company? @relation(fields: [company_id], references: [company_id])
+  job_post   JobPost? @relation(fields: [job_post_id], references: [job_post_id])
 }
 
+/*
+// type
+COMPANY_MEMBER_ADD
+COMPANY_MEMBER_REMOVE
+COMPANY_MEMBER_UPDATE
+COMPANY_PROFILE_UPDATE
+JOB_POST_CREATED
+JOB_POST_UPDATED
+APPLICANT_NEW (For HR)
+APPLICANT_STATUS_CHANGE (For the User)
+*/

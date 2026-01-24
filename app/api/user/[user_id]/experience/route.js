@@ -1,10 +1,10 @@
 import { prisma } from '@/lib/prisma'; 
 import { NextResponse } from 'next/server';
-import { BadRequestError, NotFoundError , ForbiddenError} from '@/errors/errors';
+import { UnauthenticatedError, ForbiddenError} from '@/errors/errors';
 import { handleApiError } from '@/lib/api-error-handler';
 import {createExperienceSchema} from "@/lib/validators/validators_config"
 import { validateBody } from '@/lib/middlewares/validate';
-//import { getServerSession } from "next-auth";
+import { getServerSession } from "next-auth";
 
 // export async function GET({params}) {
 //     try {
@@ -36,15 +36,18 @@ export async function POST(request, {params}) {
         let { user_id } = await params;
         user_id = parseInt(user_id)
 
-        //const session = await getServerSession()
-        // if (user_id != session.user_id) {
-        // throw new ForbiddenError("This action is forbidden") 
-        //}
+        const session = await getServerSession()
+        if (!session) {
+            throw new UnauthenticatedError("Unauthorized! Please login!")
+        }
 
+        if (user_id != session.user_id) {
+            throw new ForbiddenError("This action is forbidden") 
+        }
+
+        // validate req body
         const validator = validateBody(createExperienceSchema);
         const { error, value } = await validator(request);
-        console.log(value)
-
         if(error) return error
 
         const addedExperience = await prisma.experience.create({ data : {...value, user_id}}); 
