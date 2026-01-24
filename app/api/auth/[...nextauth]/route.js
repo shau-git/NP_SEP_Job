@@ -50,7 +50,7 @@ export const authOptions = {
 		// Google OAuth login
 		GoogleProvider({
 			clientId: process.env.GOOGLE_CLIENT_ID,
-		clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+			clientSecret: process.env.GOOGLE_CLIENT_SECRET,
 		}),
 
 		// GitHub OAuth
@@ -66,32 +66,65 @@ export const authOptions = {
             console.log("account ==== ", account)
             console.log("profile ==== ",profile)  
 
-            if(account?.provider === "credentials" || account?.provider === "google" || account?.provider === "github") {
+            if(account?.provider === "credentials") {
                 return true
-            }
+            } 
+			
+			if (account?.provider === "google" || account?.provider === "github") {
+				if (!user.email) {
+					throw new Error("Email not provided by OAuth provider");
+				}
+
+				// check if they already had account
+				const accountExist = await prisma.user.findUnique({
+					where: { email: user.email }
+				});
+
+				// if no, register the user
+				if (!accountExist) {
+					await prisma.user.create({
+						data: {
+							email: user.email,
+							image: user.image, // Next-Auth normalizes this from picture/avatar_url
+							name: user.name
+						}
+					});
+				}
+				return true;
+			}
 
             return false 
 		},
 
 
 		async jwt({ token, user }) {
-			console.log(user)
-			
+			console.log("jwt token line 101:: ", token)
+			console.log("jwt user line 102:: ", user)
+			// Initial sign in
 			if (user) {
-				//Add custom field to the token
-				token.id = user.id
-				//token.role = user.role
+				// For Credentials, ID is already user_id
+				// For OAuth, we need the database ID if it wasn't in the user object
+				if (account?.provider !== "credentials") {
+					const dbUser = await prisma.user.findUnique({
+						where: { email: user.email }
+					});
+					token.id = dbUser?.user_id;
+				} else {
+					token.id = user.id;
+				}
 			}
-			return token
+			return token;
 		},
 
-		
 		async session({ session, token }) {
-			session.user.id = token.id
+			console.log("session session line 120:: ", session)
+			console.log("session token line 121:: ", token)
+			session.user_id = token.id
+
+			console.log("session final ----- IMPORTANT ---- line 124:: ", session)
 			return session
 		}
 	},
-	
 
 	session: {
 		strategy: 'jwt', 
@@ -102,10 +135,8 @@ export const authOptions = {
 
 	secret: process.env.NEXTAUTH_SECRET, 
 
-
 	pages: {
 		signIn: '/login', // Custom login page 
-		
 	},
 }
 
