@@ -18,11 +18,18 @@ export async function GET(request, { params }) {
             image: true,
             email: true,
             summary: true,
-            skills: {
+            languages: {
                 select: {
-                    skill_id: true,
-                    skill: true,
-                    level: true,
+                    language_id: true,
+                    language: true,
+                    proficiency: true
+                }
+            },
+            links: {
+                select: {
+                    link_id: true,
+                    type: true,
+                    url: true
                 }
             },
             experiences: {
@@ -40,14 +47,20 @@ export async function GET(request, { params }) {
                 select: {
                     education_id: true,
                     institution: true,
-                    fieldOfStudy: true,
+                    field_of_study: true,
                     qualification: true,
                     start_date: true,
                     end_date: true,
                     study_type: true,
                     description: true,
                 }
-            }
+            },
+            skills: {
+                select: {
+                    skill_id: true,
+                    skill: true,
+                }
+            },
         }
 
         const session = getServerSession()

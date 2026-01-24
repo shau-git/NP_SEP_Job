@@ -13,7 +13,9 @@ export async function proxy(request) {
         '/api/experience',
         '/api/education',
         '/api/company',
-        '/api/jobapplicant'
+        '/api/jobapplicant',
+        '/api/language',
+        '/api/link'
     ];
 
     const base = protectedRoutes.find(b => pathname.startsWith(b));
@@ -73,8 +75,11 @@ export const config = {
   matcher: [
     '/api/user/:path*',
     '/api/company/:path*',
-    // '/api/education/:path*',
-    // '/api/experience/:path*',
-    // '/api/skills/:path*',
+    '/api/education/:path*',
+    '/api/experience/:path*',
+    '/api/skills/:path*',
+    '/api/jobapplicant/:path*',
+    '/api/language/:path*',
+    '/api/link/:path*'
   ],
 };

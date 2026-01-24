@@ -23,10 +23,13 @@ model User {
   summary String? @db.VarChar(500)
   skills  Skill[]
   experiences Experience[]
+  links Link[]
   educations  Education[]
+  languages Language[]
   company_members  CompanyMember[]
   job_applicants JobApplicant[]
-  notification Notification[]
+  notifications      Notification[] @relation("Receiver")
+  sent_notifications Notification[] @relation("Sender")
   @@map("user")
 }
 
@@ -34,9 +37,19 @@ model Skill {
   skill_id Int  @id @default(autoincrement()) @db.SmallInt
   user_id Int   @db.SmallInt
   skill String @db.VarChar(30)
-  level String @db.VarChar(12)
   user User @relation(fields: [user_id], references: [user_id])
+  @@index([user_id])
   @@map("skill")
+}
+
+model Language {
+  language_id Int  @id @default(autoincrement()) @db.SmallInt
+  user_id Int   @db.SmallInt
+  language String @db.VarChar(20)
+  proficiency String @db.VarChar(6)
+  user User @relation(fields: [user_id], references: [user_id])
+  @@index([user_id])
+  @@map("language")
 }
 
 model Experience {
@@ -50,6 +63,7 @@ model Experience {
   employment_type String @db.VarChar(9)
   description String @db.VarChar(500)
   user User @relation(fields: [user_id], references: [user_id])
+  @@index([user_id])
   @@map("experience")
 }
 
@@ -58,16 +72,27 @@ model Education {
   education_id Int  @id @default(autoincrement()) @db.SmallInt
   user_id Int   @db.SmallInt
   institution String @db.VarChar(50)
-  fieldOfStudy String @db.VarChar(30)
+  field_of_study String @db.VarChar(30)
   qualification String @db.VarChar(16)
   start_date DateTime @db.Date
   end_date String
   description String @db.VarChar(500)
   study_type String @db.VarChar(9)
   user User @relation(fields: [user_id], references: [user_id])
+  @@index([user_id])
   @@map("education")
 }
 
+
+model Link {
+  link_id  Int     @id @default(autoincrement()) @db.SmallInt
+  user_id  Int     @db.SmallInt
+  type     String  @db.VarChar(20) // 'website', 'linkedin', 'github', 'twitter', 'portfolio', 'other'
+  url      String  @db.VarChar(255)
+  user     User    @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  @@index([user_id])
+  @@map("link")
+}
 
 
 model Company {
@@ -79,6 +104,7 @@ model Company {
   description String? @db.VarChar(500)
   company_members  CompanyMember[]
   job_posts JobPost[]
+  notification Notification[]
   @@map("company")
 }
 
@@ -110,7 +136,10 @@ model JobPost {
   benefit String[]
   contact_email String @db.VarChar(65)
   job_applicants JobApplicant[]
+  notification Notification[]
   company Company @relation(fields: [company_id], references: [company_id])
+  @@index([company_id]) 
+  @@index([created_at]) 
   @@map("job_post")
 }
 
@@ -152,10 +181,12 @@ model Notification {
   message         String
   created_at      DateTime @default(now())
   is_read Boolean @default(false)
-  user       User     @relation("Receiver", fields: [user_id], references: [user_id])
-  sender     User?    @relation("Sender", fields: [sender_id], references: [user_id])
+  user   User  @relation("Receiver", fields: [user_id], references: [user_id])
+  sender User? @relation("Sender", fields: [sender_id], references: [user_id])
   company    Company? @relation(fields: [company_id], references: [company_id])
   job_post   JobPost? @relation(fields: [job_post_id], references: [job_post_id])
+  @@index([user_id])
+  @@map("notification")
 }
 
 /*
