@@ -57,7 +57,7 @@ export async function GET(request, { params }) {
 
         if (!companyData) throw new NotFoundError("Company not found");
         
-        return NextResponse.json({total: 1 , data: companyData});
+        return NextResponse.json({total: 1 , data: companyData}, {status: 200});
     } catch (error) {
         return handleApiError(error);
     }
@@ -148,7 +148,7 @@ export async function PUT(request, {params}) {
             await prisma.notification.createMany({ data: notifications });
         }
 
-        return NextResponse.json({message: "Company data updated successfully!", data: newCompanyData});
+        return NextResponse.json({message: "Company data updated successfully!", data: newCompanyData}, {status: 200});
     } catch (error) {
         return handleApiError(error);
     }

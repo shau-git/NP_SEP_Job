@@ -26,6 +26,7 @@ export async function GET(request) {
                 job_post_id: true,
                 company_id: true,
                 title: true,
+                industry: true,
                 requirements: true,
                 responsibilities: true,
                 employment_type: true,
@@ -36,11 +37,13 @@ export async function GET(request) {
                 salary_end: true,
                 location: true,
                 benefit: true,
+                summary: true,
+                description: true,
                 company: true
             }
         });
 
-        return NextResponse.json({total: allJobPost.length , data: allJobPost});
+        return NextResponse.json({total: allJobPost.length , data: allJobPost},{ status: 200 });
 
     } catch (error) {
         return handleApiError(error);

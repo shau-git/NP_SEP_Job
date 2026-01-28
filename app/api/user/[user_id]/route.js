@@ -6,7 +6,6 @@ import { getServerSession } from "next-auth";
 import { updateUserSchema } from '@/lib/validators/validators_config';
 import { validateBody } from '@/lib/middlewares/validate';
 import bcrypt from 'bcryptjs'
-import { getServerSession } from "next-auth";
 
 export async function GET(request, { params }) {
     try {
@@ -17,6 +16,7 @@ export async function GET(request, { params }) {
             name: true,
             image: true,
             email: true,
+            role: true,
             summary: true,
             languages: {
                 select: {
@@ -41,6 +41,7 @@ export async function GET(request, { params }) {
                     start_date: true,
                     end_date: true,
                     description: true,
+                    employment_type: true
                 }
             },
             educations: {
@@ -64,6 +65,7 @@ export async function GET(request, { params }) {
         }
 
         const session = getServerSession()
+        console.log("line 66 GET user", session)
         if(user_id == session.user_id) {
             selectFields.company_members = {
                 select: {
@@ -82,7 +84,7 @@ export async function GET(request, { params }) {
             };
         }
 
-        const userWithData = await prisma.user.findMany({
+        const userWithData = await prisma.user.findFirst({
             where: { user_id: parseInt(user_id) },
             select: selectFields
         });
@@ -91,7 +93,7 @@ export async function GET(request, { params }) {
             throw new NotFoundError(`User id ${user_id} not found`)
         }
         
-        return NextResponse.json({data: userWithData});
+        return NextResponse.json({total: 1, data: userWithData},{ status: 200 });
     } catch (error) {
         return handleApiError(error);
     }
@@ -107,7 +109,7 @@ export async function PUT(request, {params}) {
         let { user_id } = await params; 
         user_id = parseInt(user_id)
 
-        const session = await getServerSession(authOptions);
+        const session = await getServerSession();
         if (!session) throw new UnauthenticatedError("Login required");
 
         if(session.user_id != user_id) throw new ForbiddenError("You can only modify your own profile!")

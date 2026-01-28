@@ -27,7 +27,7 @@ export async function GET(request) {
             }
         });
 
-        return NextResponse.json({total: notifications.length , data: notifications });
+        return NextResponse.json({total: notifications.length , data: notifications },{ status: 200 });
     } catch (error) {
         return handleApiError(error);
     }

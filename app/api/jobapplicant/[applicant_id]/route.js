@@ -107,7 +107,7 @@ export async function PUT(request, { params }) {
             data: notificationsToCreate
         });
         
-        return NextResponse.json({ message: "Job Application updated", data: updatedApplication });
+        return NextResponse.json({ message: "Job Application updated", data: updatedApplication },{ status: 200 });
 
     } catch (error) {
         return handleApiError(error);

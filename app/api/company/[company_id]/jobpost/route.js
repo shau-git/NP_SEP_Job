@@ -74,7 +74,7 @@ export async function POST(request, {params}) {
             await prisma.notification.createMany({ data: notifications });
         }
         
-        return NextResponse.json({message: "New Job Post added!", data: newJobPost});
+        return NextResponse.json({message: "New Job Post added!", data: newJobPost}, {status: 201});
     } catch (error) {
         return handleApiError(error);
     }

@@ -1,9 +1,21 @@
 'use client'
-import {useState} from "react"
+import {useState, useEffect} from "react"
+import { Hero, Quote , Category, Features} from "@/components/Home/home_config"
 
 export default function Home() {
-  return (
-   
-    <div className="text-3xl font-bold underline">Home</div>
-  );
+
+    
+
+    const [user, setUser] = useState(null)
+
+    
+    return (
+    
+        <div className="bg-[#0f0f1e] min-h-screen text-white overflow-hidden">
+            <Hero/>
+            <Quote />
+            <Category/>
+            <Features/>
+        </div>
+    );
 }

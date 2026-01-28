@@ -24,7 +24,7 @@ export const authOptions = {
 
                 const user = await prisma.user.findUnique({
                     where: { email: credentials.email  }
-                 });
+                });
 				
 				// Check if user exists and has password
 				if (!user || !user.password) {

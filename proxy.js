@@ -49,7 +49,7 @@ export async function proxy(request) {
                 };
 
                 const target = modelMapping[route];
-
+                
                 // check if the id exist
                 if (target) {
                     const record = await target.model.findUnique({

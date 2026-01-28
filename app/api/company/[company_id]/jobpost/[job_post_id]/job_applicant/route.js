@@ -48,7 +48,7 @@ export async function GET(request, {params}) {
             where: {job_post_id}
         })
 
-        return NextResponse.json({total: applicants.length, data: applicants})
+        return NextResponse.json({total: applicants.length, data: applicants},{ status: 200 })
 
     } catch (error) { 
         return handleApiError(error);
@@ -129,7 +129,7 @@ export async function POST(request, {params}) {
 
         await prisma.notification.createMany({ data: notifications });
 
-        return NextResponse.json({ message: "Apply Job successfully", data: applyJob });
+        return NextResponse.json({ message: "Apply Job successfully", data: applyJob },{ status: 201 });
 
     } catch (error) {
         return handleApiError(error);

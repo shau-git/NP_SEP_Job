@@ -1,0 +1,476 @@
+import {useState} from 'react'
+import {PlusButton, Title, Duration, DeleteButton, InputTag, SelectTag, CancelButton, SaveButton} from "@/components/user/utils/utils_config"
+import { formatDate} from '@/util/formating'
+import {updateUser, addUserData, deleteUserData} from "@/util/fetchData/fetch_config"
+import {Briefcase, Trash2, Edit2, X, Save} from "lucide-react"
+import { useSession } from 'next-auth/react'
+
+const Experience = ({ experiences, setUser, user_id}) => {
+
+    const {data: session, status: sessionStatus} = useSession()
+    const [isAdding, setIsAdding] = useState(false);
+    const [editingId, setEditingId] = useState(null);
+    const [errors, setErrors] = useState({});
+    
+    const [formData, setFormData] = useState({
+        company: '',
+        role: '',
+        years: '',
+        start_date: '',
+        end_date: '',
+        employment_type: '',
+        description: ''
+    });
+
+    // Reset form
+    const resetForm = () => {
+        setFormData({
+            company: '',
+            role: '',
+            years: '',
+            start_date: '',
+            end_date: '',
+            employment_type: '',
+            description: ''
+        });
+        setErrors({});
+        setIsAdding(false);
+        setEditingId(null);
+    };
+
+    //handle save button
+    const handleSaveButton = () => {
+        editingId ? handleUpdate(editingId) : handleAdd()
+    }
+
+    // handle the plus button
+    const handleClickPlus = () => {
+        resetForm();
+        setIsAdding(true);
+        setEditingId(null);
+        
+    }
+
+    // Handle input change
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+        // Clear error for this field
+        if (errors[name]) {
+        setErrors({ ...errors, [name]: '' });
+        }
+    };
+
+
+    // Validate form
+    const validateForm = () => {
+        const newErrors = {};
+
+        if (!formData.company.trim()) newErrors.company = 'Company is required';
+        else if (formData.company.length > 30) newErrors.company = 'Max 30 characters';
+
+        if (!formData.role.trim()) newErrors.role = 'Role is required';
+        else if (formData.role.length > 30) newErrors.role = 'Max 30 characters';
+
+        if (!formData.start_date) newErrors.start_date = 'Start date is required';
+
+        if (!formData.end_date) newErrors.end_date = 'End date is required';
+        else if (formData.end_date !== 'present' && new Date(formData.end_date) < new Date(formData.start_date)) {
+            newErrors.end_date = 'End date must be after start date';
+        }
+
+        if (!formData.description.trim()) newErrors.description = 'Description is required';
+        else if (formData.description.length > 500) newErrors.description = 'Max 500 characters';
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    // Update experience
+    const handleUpdate = async (experienceId) => {
+        if (!validateForm()) return;
+
+        try {
+            const response = await updateUser("experience", experienceId, formData);
+            const data = await response.json()
+
+            if(response.status === 200){
+                const {experience_id, company, role, years, start_date, end_date, description, employment_type} = data.data
+                // Update user state
+                setUser(prevUser => ({
+                    ...prevUser,
+                    experiences: prevUser.experiences.map(exp =>
+                        exp.experience_id === experienceId ? 
+                            {experience_id, company, role, years, start_date, end_date, description, employment_type}
+                        :    exp
+                    )
+                }));
+                // clear draft
+                resetForm();
+                toast.success(data.message);
+            } else {
+                toast.error(data.message)
+            }   
+        } catch (error) {
+            console.error('Error updating experience:', error);
+            toast.error('Failed to update experience');
+        }
+    };
+
+    // Add experience
+    const handleAdd = async () => {
+        if (!validateForm()) return;
+
+        try {
+            const response = await addUserData(user_id, formData, "experience");
+            const data = await response.json()
+            
+            if(response.status === 201){
+                const {experience_id, company, role, years, start_date, end_date, description, employment_type} = data.data
+                // Update user state
+                setUser(prevUser => ({
+                    ...prevUser,
+                    experiences: [...prevUser.experiences, {experience_id, company, role, years, start_date, end_date, description, employment_type}]
+                }))
+                // clear draft
+                resetForm();
+                toast.success(data.message);
+            } else {
+                toast.error(data.message)
+            }    
+        } catch (error) {
+            console.error('Error adding experience:', error);
+            toast.error('Failed to add experience')
+        }
+    };
+
+    // Delete experience
+    const handleDelete = async (experienceId) => {
+        if (!confirm('Are you sure you want to delete this experience?')) return;
+    
+        try {
+            const response =  await deleteUserData(skill_id, "skills");
+            const data = await response.json()
+
+            if(response.status === 200){
+                // update user state
+                setUser(prevUser => ({
+                    ...prevUser,
+                    experiences: prevUser.experiences.filter(exp => exp.experience_id !== experienceId)
+                }));
+            
+                if (editingId === experienceId) resetForm();
+                toast.success(data.message)
+            } else {
+                toast.error(data.message)
+            }      
+        } catch (error) {
+            console.error('Error deleting experience:', error);
+            toast.error('Failed to delete experience');
+        }
+    };
+
+    // Start editing
+    const handleEdit = (exp) => {
+        setEditingId(exp.experience_id);
+        setFormData({
+            company: exp.company,
+            role: exp.role,
+            years: exp.years,
+            start_date: exp.start_date.split('T')[0], // Format: YYYY-MM-DD
+            end_date: exp.end_date === 'present' ? 'present' : exp.end_date.split('T')[0],
+            employment_type: exp.employment_type,
+            description: exp.description
+        });
+        setIsAdding(false);
+    };
+
+    return (
+        <div className="bg-white/5 backdrop-blur-xl rounded-2xl py-6 px-7 border border-white/10">
+            <div className="flex justify-between items-center mb-6">
+                <Title title="Experience"/>
+                {/* <button className="text-purple-400 hover:text-purple-300 transition-colors cursor-pointer">
+                    <Plus className="w-5 h-5" />
+                </button> */}
+                <PlusButton handleClick={handleClickPlus}/>
+            </div>
+
+            {/* Add/Edit Form */}
+            {(isAdding || editingId) && (
+                <div className="mb-6 p-6 bg-white/5 rounded-xl border border-purple-500/30">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Company */}
+                        {/* <div>
+                            <label className="block text-white/80 font-medium mb-2 text-sm">
+                                Company *
+                            </label>
+                            <input
+                                type="text"
+                                name="company"
+                                value={formData.company}
+                                onChange={handleChange}
+                                placeholder="e.g., Google"
+                                maxLength={30}
+                                className={`w-full bg-white/5 border ${
+                                errors.company ? 'border-red-500/50' : 'border-white/20'
+                                } rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500`}
+                            />
+                            {errors.company && <p className="text-red-400 text-xs mt-1">{errors.company}</p>}
+                        </div> */}
+                        <InputTag 
+                            label="Company *"
+                            type="text"
+                            name="company"
+                            value={formData.company}
+                            handleChangeFunc={handleChange}
+                            placeholder="e.g., Google"
+                            maxLength={30}
+                            error={errors.company}
+                        />
+
+                        {/* Role */}
+                        {/* <div>
+                            <label className="block text-white/80 font-medium mb-2 text-sm">
+                                Role *
+                            </label>
+                            <input
+                                type="text"
+                                name="role"
+                                value={formData.role}
+                                onChange={handleChange}
+                                placeholder="e.g., Senior Developer"
+                                maxLength={30}
+                                className={`w-full bg-white/5 border ${
+                                errors.role ? 'border-red-500/50' : 'border-white/20'
+                                } rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500`}
+                            />
+                            {errors.role && <p className="text-red-400 text-xs mt-1">{errors.role}</p>}
+                        </div> */}
+                        <InputTag 
+                            label="Role *"
+                            type="role"
+                            name="company"
+                            value={formData.role}
+                            handleChangeFunc={handleChange}
+                            placeholder="e.g., Senior Developer"
+                            maxLength={30}
+                            error={errors.role}
+                        />
+
+                        {/* Years of Experience */}
+                        {/* <div>
+                            <label className="block text-white/80 font-medium mb-2 text-sm">
+                                Years of Experience *
+                            </label>
+                            <select
+                                name="years"
+                                value={formData.years}
+                                onChange={handleChange}
+                                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
+                            >
+                                <option value="0-2">0-2 years</option>
+                                <option value="3-5">3-5 years</option>
+                                <option value="5-8">5-8 years</option>
+                                <option value="8+">8+ years</option>
+                            </select>
+                        </div> */}
+                        <SelectTag 
+                            field="Years of Experience *"
+                            name="years"
+                            value={formData.years}
+                            handleChangeFunc={handleChange}
+                            options={["0-2", "3-5", "5-8", "8+" ]}
+                        />
+
+                        {/* Employment Type */}
+                        {/* <div>
+                            <label className="block text-white/80 font-medium mb-2 text-sm">
+                                Employment Type *
+                            </label>
+                            <select
+                                name="employment_type"
+                                value={formData.employment_type}
+                                onChange={handleChange}
+                                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
+                            >
+                                <option value="full time">Full Time</option>
+                                <option value="part time">Part Time</option>
+                            </select>
+                        </div> */}
+                        <SelectTag 
+                            field="Employment Type *"
+                            name="employment_type"
+                            value={formData.employment_type}
+                            handleChangeFunc={handleChange}
+                            options={["full time", "part time"]}
+                        />
+
+                        {/* Start Date */}
+                        {/* <div>
+                            <label className="block text-white/80 font-medium mb-2 text-sm">
+                                Start Date *
+                            </label>
+                            <input
+                                type="date"
+                                name="start_date"
+                                value={formData.start_date}
+                                onChange={handleChange}
+                                className={`w-full bg-white/5 border ${
+                                errors.start_date ? 'border-red-500/50' : 'border-white/20'
+                                } rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500`}
+                            />
+                            {errors.start_date && <p className="text-red-400 text-xs mt-1">{errors.start_date}</p>}
+                        </div> */}
+                        <InputTag 
+                            label="Start Date *"
+                            type="date"
+                            name="start_date"
+                            value={formData.start_date}
+                            handleChangeFunc={handleChange}
+                            error={errors.start_date}
+                        />
+
+                        {/* End Date */}
+                        <div>
+                            <label className="block text-white/80 font-medium mb-2 text-sm">
+                                End Date *
+                            </label>
+                            <div className="flex gap-2">
+                                <input
+                                    type="date"
+                                    name="end_date"
+                                    value={formData.end_date === 'present' ? '' : formData.end_date}
+                                    onChange={handleChange}
+                                    disabled={formData.end_date === 'present'}
+                                    className={`flex-1 bg-white/5 border ${
+                                        errors.end_date ? 'border-red-500/50' : 'border-white/20'
+                                    } rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500 disabled:opacity-50`}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ 
+                                        ...formData, 
+                                        end_date: formData.end_date === 'present' ? '' : 'present' 
+                                    })}
+                                    className={`px-4 py-2 rounded-lg border transition-all ${
+                                        formData.end_date === 'present'
+                                        ? 'bg-purple-500/30 border-purple-500/50 text-purple-300'
+                                        : 'bg-white/5 border-white/20 text-white/70 hover:bg-white/10'
+                                    }`}
+                                >
+                                    Present
+                                </button>
+                            </div>
+                            {errors.end_date && <p className="text-red-400 text-xs mt-1">{errors.end_date}</p>}
+                        </div>
+
+                        {/* Description */}
+                        <div className="md:col-span-2">
+                            <label className="block text-white/80 font-medium mb-2 text-sm">
+                                Description *
+                            </label>
+                            <textarea
+                                name="description"
+                                value={formData.description}
+                                onChange={handleChange}
+                                placeholder="Describe your role and achievements..."
+                                maxLength={500}
+                                rows={4}
+                                className={`w-full bg-white/5 border ${
+                                errors.description ? 'border-red-500/50' : 'border-white/20'
+                                } rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500 resize-none`}
+                            />
+                            <div className="flex justify-between items-center mt-1">
+                                {errors.description && <p className="text-red-400 text-xs">{errors.description}</p>}
+                                <p className="text-white/40 text-xs ml-auto">{formData.description.length}/500</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Form Actions */}
+                    <div className="flex justify-end gap-3 mt-4">
+                        {/* <button
+                            onClick={resetForm}
+                            className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white/70 hover:bg-white/10 transition-all flex items-center gap-2"
+                        >
+                            <X className="w-4 h-4" />
+                            Cancel
+                        </button> */}
+                        <CancelButton {...{resetForm}}/>
+
+                        {/* <button
+                            onClick={() => editingId ? handleUpdate(editingId) : handleAdd()}
+                            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-purple-500/50 transition-all flex items-center gap-2"
+                        >
+                            <Save className="w-4 h-4" />
+                            {editingId ? 'Update' : 'Add'} Experience
+                        </button> */}
+                        <SaveButton 
+                            field="Experience" 
+                            handleSave={handleSaveButton}
+                            editingId={editingId}
+                        />
+                    </div>
+                </div>
+            )}
+            
+
+            {/* Experience List*/}
+            <div className="space-y-6">
+                {experiences.length === 0 ? (
+                <p className="text-center text-white/50 py-8">No experience added yet</p>
+                ) : (
+                experiences.map((exp) => (
+                    <div
+                        key={exp.experience_id}
+                        className="border-b border-white/10 pb-6 last:border-0 group"
+                    >
+                        <div className="flex gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-linear-to-br from-purple-500 to-pink-500 flex items-center justify-center text-2xl flex-shrink-0">
+                                <Briefcase className="w-6 h-6 text-white" />
+                            </div>
+                            <div className="flex-1">
+                                <div className="flex justify-between items-start mb-2">
+                                    <div>
+                                        <h3 className="text-xl font-semibold text-white">{exp.role}</h3>
+                                        <div className="text-purple-400 font-semibold">{exp.company}</div>
+                                        <div className="text-white/50 text-sm mb-3">
+                                            {formatDate(exp.start_date)} - {formatDate(exp.end_date)} · {exp.years} years
+                                        </div>
+                                        {/* <div className="flex gap-2 mt-2">
+                                            <span className="px-3 py-1 bg-purple-500/20 border border-purple-500/30 rounded-full text-xs text-purple-200 capitalize">
+                                            {exp.employment_type}
+                                            </span>
+                                        </div> */}
+                                        <Duration design="bg-purple-500/20 border-purple-500/30 " duration={exp.employment_type}/>
+                                    </div>
+                                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                            onClick={() => handleEdit(exp)}
+                                            className="p-2 bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-300 hover:bg-blue-500/30 transition-all"
+                                            title="Edit"
+                                        >
+                                            <Edit2 className="w-4 h-4" />
+                                        </button>
+                                        {/* <button
+                                            onClick={() => handleDelete(exp.experience_id)}
+                                            className="p-2 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 hover:bg-red-500/30 transition-all"
+                                            title="Delete"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button> */}
+                                        <DeleteButton onDelete={handleDelete} field_id={exp.experience_id}/>
+                                    </div>
+                                </div>
+                                <p className="text-white/70 leading-relaxed">{exp.description}</p>
+                            </div>
+                        </div>
+                    </div>
+                ))
+                )}
+            </div>
+        </div>
+    )
+}
+
+export default Experience

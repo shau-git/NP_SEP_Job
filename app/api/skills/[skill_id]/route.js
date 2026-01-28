@@ -37,7 +37,7 @@ export async function PUT(request, { params }) {
                 where: { skill_id },
                 data: value
             });
-            return NextResponse.json({ message: `Skill id ${skill_id} record updated successfully`, data});
+            return NextResponse.json({ message: `Skill id ${skill_id} record updated successfully`, data},{ status: 200 });
         } else {
             throw new ForbiddenError("This action is Forbidden")
         }

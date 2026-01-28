@@ -36,7 +36,7 @@ export async function PUT(request, { params }) {
                 where: { link_id },
                 data: value
             });
-            return NextResponse.json({ message: `Link id ${link_id} record updated successfully`, data});
+            return NextResponse.json({ message: `Link id ${link_id} record updated successfully`, data},{ status: 200 });
         } else {
             throw new ForbiddenError("This action is Forbidden")
         }

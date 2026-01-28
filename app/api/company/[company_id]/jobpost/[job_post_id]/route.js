@@ -102,7 +102,7 @@ export async function PUT(request, {params}) {
             await prisma.notification.createMany({ data: notificationsToCreate });
         }
         
-        return NextResponse.json({message: `Job Post id ${job_post_id} updated!`, data: updatedJobPost});
+        return NextResponse.json({message: `Job Post id ${job_post_id} updated!`, data: updatedJobPost},{ status: 200 });
     } catch (error) {
         return handleApiError(error);
     }

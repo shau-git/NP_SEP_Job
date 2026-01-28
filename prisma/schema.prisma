@@ -17,6 +17,7 @@ datasource db {
 model User {
   user_id Int     @id @default(autoincrement()) @db.SmallInt
   name    String  @db.VarChar(50)
+  role String? @db.VarChar(50)
   image String? 
   email   String  @unique @db.VarChar(65)
   password String? @db.VarChar(255)
@@ -123,7 +124,8 @@ model CompanyMember {
 model JobPost {
   job_post_id Int     @id @default(autoincrement()) @db.SmallInt
   company_id Int   @db.SmallInt
-  title String  @db.VarChar(30)
+  title String  @db.VarChar(50)
+  industry String  @db.VarChar(20)
   requirements String[]
   responsibilities String[]
   employment_type String  @db.VarChar(9)
@@ -135,6 +137,8 @@ model JobPost {
   location String @db.VarChar(6)
   benefit String[]
   contact_email String @db.VarChar(65)
+  description String @db.VarChar(500)
+  summary String @db.VarChar(100)
   job_applicants JobApplicant[]
   notification Notification[]
   company Company @relation(fields: [company_id], references: [company_id])

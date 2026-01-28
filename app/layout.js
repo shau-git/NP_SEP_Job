@@ -3,6 +3,7 @@ import "./globals.css";
 import ReactToast from "@/components/react-toast";
 import { getServerSession } from "next-auth";
 import AuthProvider  from "@/util/SessionProvider";
+import Nav from "@/components/navigation/Nav"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,14 +21,17 @@ export const metadata = {
 };
 
 export default async function RootLayout({ children }) {
-  //const session = await getServerSession()
+  const session = await getServerSession()
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased m-0 p-0`}
       >
-        {children}
-        <ReactToast/>
+        <AuthProvider session={session}>
+          <Nav/>
+          {children}
+          <ReactToast/>
+        </AuthProvider>
       </body>
     </html>
   );

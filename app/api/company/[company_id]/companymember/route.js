@@ -61,7 +61,7 @@ export async function GET() {
         });
 
         if(data) {
-            return NextResponse({data})
+            return NextResponse({total:1, data},{ status: 200 })
         } else {
             throw new NotFoundError(`Company id ${company_id} has no member`)
         }
@@ -154,7 +154,7 @@ export async function POST(request, { params }) {
             await prisma.notification.createMany({ data: notifications });
         }
         
-        return NextResponse.json({ message: "New Member Added!", data: newMember });
+        return NextResponse.json({ message: "New Member Added!", data: newMember },{ status: 201 });
     } catch (error) {
         return handleApiError(error);
     }

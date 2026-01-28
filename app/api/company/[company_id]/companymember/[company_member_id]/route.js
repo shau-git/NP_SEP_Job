@@ -80,7 +80,7 @@ export async function PUT(request, {params}) {
             }
         });
         
-        return NextResponse.json({message: "Member's data modified successfully!", data: newCompanyMemberData});
+        return NextResponse.json({message: "Member's data modified successfully!", data: newCompanyMemberData},{ status: 200 });
     } catch (error) {
         return handleApiError(error);
     }

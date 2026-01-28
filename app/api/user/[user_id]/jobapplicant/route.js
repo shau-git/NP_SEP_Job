@@ -30,7 +30,7 @@ export async function GET(request, {params}) {
             }
         });
         
-        return NextResponse.json({total: myApplications.length, data: myApplications});
+        return NextResponse.json({total: myApplications.length, data: myApplications}, { status: 200 });
     } catch (error) {
         return handleApiError(error);
     }
