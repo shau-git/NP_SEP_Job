@@ -1,14 +1,21 @@
 'use client'
 import {useSession} from "next-auth/react"
-import {redirect} from "next/navigation"
+import {redirect, notFound} from "next/navigation"
 import {use, useState, useEffect} from 'react'
 import {getUser, updateUser, addUserData, deleteUserData} from "@/util/fetchData/fetch_config"
 import { toast } from "react-toastify"
-import { Camera, Mail, Globe, Linkedin, Github, MapPin, Briefcase, Edit2, X} from 'lucide-react';
+import { Camera,  MapPin, Briefcase, Edit2} from 'lucide-react';
 import {Profile, Summary,  Education, Experience, Skill, Language, Links} from "@/components/user/user_config"
+import Loading from "@/components/Loading"
 
 const User = ({params}) => {
     const {user_id} = use(params)
+
+    if(!parseInt(user_id)) {
+        toast.error("user id must be a number ")
+        redirect('/')
+    }
+    const {data: session, status: sessionStatus, update} = useSession()
 
     const [user, setUser] = useState(null)
     const [summaryDraft, setSummaryDraft] = useState('');
@@ -20,7 +27,7 @@ const User = ({params}) => {
 
         if(response.status === 200) {
             console.log(data.data)
-            setUser(data)
+            setUser(data.data)
         } else {
             toast.error(data.message)
         }
@@ -38,17 +45,6 @@ const User = ({params}) => {
 
     const [newLink, setNewLink] = useState({ type: "website", url: "", label: "" });
 
-    const linkIcons = {
-        website: <Globe className="w-5 h-5" />,
-        linkedin: <Linkedin className="w-5 h-5" />,
-        github: <Github className="w-5 h-5" />,
-        twitter: <Globe className="w-5 h-5" />,
-        portfolio: <Briefcase className="w-5 h-5" />,
-        other: <Globe className="w-5 h-5" />
-    };
-
-    
-    
     const handleAddLink = () => {
         if (newLink.url.trim()) {
         const newLinkObj = {
@@ -70,18 +66,16 @@ const User = ({params}) => {
 
     if (!user) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-950 text-blue-500">
-                <div className="animate-pulse">Loading Profile...</div>
-            </div>
+            <Loading/>
         )
     }
 
-    const { name, image, role, email, summary, languages, links, experiences, educations, skills} = user.data
-    
+    const { name, image, role, email, summary, languages, links, experiences, educations, skills} = user
+
     // ===== SUMMARY FUNCTIONS =====  
     const handleEditSummary = () => {
         // save user's summary to a draft
-        setSummaryDraft(summary);
+        setSummaryDraft(summary||"");
         // set the summary (about me) to edit mode
         setEditMode({ ...editMode, summary: true });
     };
@@ -120,7 +114,7 @@ const User = ({params}) => {
         if (!newSkill.trim()) return;
 
         try {
-            const response = await addUserData(user_id, {skill: newSkill.trim()}, "skill");
+            const response = await addUserData(user_id, {skill: newSkill.trim()}, "skills");
             const data = await response.json()
 
             if(response.status === 201){
@@ -146,7 +140,7 @@ const User = ({params}) => {
         if (!confirm('Are you sure you want to remove this skill?')) return;
 
         try {
-            const response =  await deleteUserData(skill_id, "skills");
+            const response =  await deleteUserData("skills", skill_id, );
             const data = await response.json()
 
             if(response.status === 200){
@@ -167,34 +161,40 @@ const User = ({params}) => {
         }
     };
 
-
+//bg-linear-to-br from-slate-900 via-purple-950 to-slate-900
     return (
-        <div className="min-h-screen bg-linear-to-br from-slate-900 via-purple-950 to-slate-900">
+        <div className="min-h-screen bg-[#0f0f1e]">
             
             {/* Profile Header */}
-            <Profile {...{user, Camera, MapPin, Briefcase, name, image, role}}/>
+            <Profile {...{update, session, setUser, user, user_id, Camera, MapPin, Briefcase, name, image, role}}/>
 
             {/* Main Content */}
             <div className="max-w-7xl mx-auto px-6 pb-12">
-                <div className="grid grid-cols-1  gap-6">
-                    {/* Main Column */}
-                    {/* About Me */}
-                    <Summary {...{ summary, handleEditSummary, handleSaveSummary,handleCancelSummary,  editMode, summaryDraft, Edit2}}/>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Left Column */}
+                    <div className="lg:col-span-2 space-y-6">
+                        {/* About Me */}
+                        <Summary {...{session, user_id, setSummaryDraft, summary, handleEditSummary, handleSaveSummary,handleCancelSummary,  editMode, summaryDraft, Edit2}}/>
+                        
+                        {/* Experience */}
+                        <Experience {...{ session, user_id, user, experiences, setUser, user_id }}/>
+                        
+                        {/* Education */}
+                        <Education {...{session, educations, setUser, user_id }}/>
+
+                        {/* Skills */}
+                        <Skill {...{session, user_id, setEditMode, editMode, skills,  handleRemoveSkill, newSkill,  setNewSkill, handleAddSkill}}/>
+                    </div>
                     
-                    {/* Experience */}
-                    <Experience {...{ experiences, setUser, user_id }}/>
-                    
-                    {/* Education */}
-                    <Education {...{educations, setUser, user_id }}/>
 
-                    {/* Skills */}
-                    <Skill {...{X, setEditMode, editMode, skills,  handleRemoveSkill, newSkill,  setNewSkill, handleAddSkill}}/>
+                    <div className="lg:col-span-1 space-y-6">
+                        {/* Contact & Links */}
+                        <Links {...{session, setUser, user_id,  setEditMode, editMode, email, links,  handleRemoveLink, newLink, setNewLink, handleAddLink}}/>
 
-                    {/* Contact & Links */}
-                    <Links {...{linkIcons,  Mail, setEditMode, editMode, email, links,  handleRemoveLink, newLink, setNewLink, handleAddLink}}/>
-
-                    {/* Languages */}
-                    <Language {...{ languages}}/>
+                        {/* Languages */}
+                        <Language {...{session, languages, setUser, user_id}}/>
+                    </div>
+                   
                 </div>
             </div>
         </div>

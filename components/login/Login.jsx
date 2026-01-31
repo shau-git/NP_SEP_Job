@@ -1,10 +1,13 @@
 import {useState, useEffect} from 'react'
 import { motion, AnimatePresence } from 'framer-motion';
 import {toast} from "react-toastify"
-import { signIn } from 'next-auth/react'
+import { signIn , useSession} from 'next-auth/react'
 import { Mail, Lock, Eye, EyeOff, X, Github, Chromium } from 'lucide-react';
+import {useRouter} from "next/navigation"
 
-const Login = ({setOpenLoginModal}) => {
+const Login = ({setOpenLoginModal, active}) => {
+    const router = useRouter()
+    const {data: session, status: sessionStatus} = useSession()
     const [isMobileHeight, setMobileHeigt] = useState(false)
     const [isLogin, setIsLogin] = useState(true);
     const [showPassword, setShowPassword] = useState(false);
@@ -15,10 +18,19 @@ const Login = ({setOpenLoginModal}) => {
         confirmPassword: ''
     });
 
+    useEffect(() => {
+        console.log(sessionStatus)  // authenticated or unauthenticated
+        if (sessionStatus === 'authenticated' && session?.user_id) {
+            console.log("from login")
+            router.push(`/${active}/${session.user_id}`);
+            setOpenLoginModal(false); // Close the modal after redirect
+        }
+    }, [sessionStatus, session, router, active])
+
+
     const [errors, setErrors] = useState({});
 
     const handleChange = (e) => {
-        console.log(e.target)
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
         if (errors[name]) {
@@ -76,17 +88,13 @@ const Login = ({setOpenLoginModal}) => {
                 const res = await signIn('credentials', {
                     redirect: false,
                     email: formData.email,
-                    password: formData.password
+                    password: formData.password,
                 })
-                if(res?.error) {
-                    if(res?.url) {
-                        console.log("router:::", router)
-                        router.replace('/dashboard')
-                    }
-                    toast.error("Invalid Credential")
-                } else {
+                if(res?.ok) {
                     toast.success("Sucessfully Logged In.")
-                    
+                    setOpenLoginModal(false)
+                } else {
+                    toast.error("Invalid Credential")
                 }
             } else {
                 try {
@@ -101,18 +109,17 @@ const Login = ({setOpenLoginModal}) => {
                             name: formData.name 
                         })
                     })
+                    const data = await res.json()
                     console.log(res)
                     if(res.status === 201) {
-                        toast.success(res.message)
-                        router.push('/login')
+                        toast.success(data.message)
                     } else {
-                        toast.error(res.message)
+                        toast.error(data.message)
                     }
                 } catch(error) {
                     toast.error(error)
                 }
             }
-            setShowModal(false)
         }
     };
 
@@ -324,14 +331,14 @@ const Login = ({setOpenLoginModal}) => {
                 {/* Social Login */}
                 <div className="grid grid-cols-2 gap-3 mb-6">
                     <button
-                        onClick={() => signIn('google')}
+                        onClick={() => signIn('google', { callbackUrl: `/` })}
                         className="flex items-center justify-center gap-2 py-2 px-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:border-white/20 transition-all group"
                     >
                         <Chromium className="w-5 h-5 text-white/60 group-hover:text-white/80 transition-colors" />
                         <span className="text-white/70 group-hover:text-white/90 font-medium">Google</span>
                     </button>
                     <button
-                        onClick={() => signIn('github')}
+                        onClick={() => signIn('github', { callbackUrl: `/` })}
                         className="flex items-center justify-center gap-2 py-2 px-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:border-white/20 transition-all group"
                     >
                         <Github className="w-5 h-5 text-white/60 group-hover:text-white/80 transition-colors" />

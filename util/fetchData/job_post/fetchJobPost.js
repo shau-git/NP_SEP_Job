@@ -34,6 +34,19 @@ const getJobPost = async () => {
     return data;
 };
 
+const getOneJobPost = async (job_post_id) => {
+    const response = await fetch(`/api/jobpost/${job_post_id}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    });
+
+    return response;
+};
+
+
 export {
-    getJobPost
+    getJobPost,
+    getOneJobPost
 }

@@ -3,10 +3,11 @@ import { NextResponse } from 'next/server';
 import { UnauthenticatedError } from '@/errors/errors';
 import { handleApiError } from '@/lib/api-error-handler';
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function GET(request) {
     try {
-        const session = await getServerSession();
+        const session = await getServerSession(authOptions);
         if (!session) throw new UnauthenticatedError("Please login to view notifications");
 
         const user_id = parseInt(session.user_id);

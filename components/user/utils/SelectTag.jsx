@@ -22,7 +22,7 @@ const SelectTag = ({
                 <Option value="part time"/> */}
                 {/* Map through the passed options */}
                 {options.map((opt) => (
-                    <Option key={opt} value={`${opt}`} />
+                    <Option key={opt} value={opt} />
                 ))}
             </select>
         </div>

@@ -11,8 +11,6 @@ export async function POST(request) {
         // validate request body
         const validator = validateBody(createUserSchema);
         const { error, value } = await validator(request);
-        console.log(value)
-
         if(error) return error
 
         // ensure the same email is not stored in db
@@ -26,11 +24,18 @@ export async function POST(request) {
 
         // encrypt user's password before storing
         const salt = await bcrypt.genSalt(10);
-        value.password = await bcrypt.hash(value.password, salt)
+        const hashedPassword = await bcrypt.hash(value.password, salt);
 
-        // create new user
-        const newUser = await prisma.user.create({ data: value }); 
-        return NextResponse.json({message: "User register successfully" ,data: newUser}, { status: 201 });
+        // CREATE A CLEAN OBJECT: only include fields that exist in your Prisma schema
+        const newUser = await prisma.user.create({ 
+            data: {
+                name: value.name,
+                email: value.email,
+                password: hashedPassword
+            } 
+        });
+
+        return NextResponse.json({message: "User register successfully! Please Login!" ,data: newUser}, { status: 201 });
     } catch (error) {
         return handleApiError(error);
     }

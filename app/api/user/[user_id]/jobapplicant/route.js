@@ -3,12 +3,13 @@ import { NextResponse } from 'next/server';
 import { ForbiddenError, NotFoundError, UnauthenticatedError, BadRequestError} from '@/errors/errors';
 import { handleApiError } from '@/lib/api-error-handler';
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 // for user to get their own job applicantion data
 export async function GET(request, {params}) {
     try {
 
-        const session = getServerSession()
+        const session = getServerSession(authOptions)
         if (!session) throw new UnauthenticatedError("Unauthorized! Please login!");
 
         const {user_id} = await params

@@ -1,104 +1,353 @@
-import React from 'react'
-import {EditButton, Option, Title} from "@/components/user/utils/utils_config"
+import {Option, Title, PlusButton, InputTag, CancelButton, SaveButton, MoreMenu, AnchorTag} from "@/components/user/utils/utils_config"
+import { toast } from "react-toastify"
+import { useState } from 'react';
+import { Link as LinkIcon, Plus, X, Save, Globe, Linkedin, Github, Twitter, Briefcase, Mail as Email } from 'lucide-react';
+import {updateUser, addUserData, deleteUserData} from "@/util/fetchData/fetch_config"
 
-const Links = ({linkIcons, Mail, setEditMode, editMode, email, links, handleRemoveLink, newLink, setNewLink, handleAddLink}) => {
-    const handleEdit = () => {
-        setEditMode({ ...editMode, links: !editMode.links })
+const Links = ({session, setUser, user_id, Mail, setEditMode, editMode, email, links, handleRemoveLink, newLink, setNewLink, handleAddLink}) => {
+    
+    const [isAdding, setIsAdding] = useState(false);
+    const [editingId, setEditingId] = useState(null);
+    const [formData, setFormData] = useState({
+        url: '',
+        type: 'Website'
+    });
+
+    const [errors, setErrors] = useState({});
+
+    // Link types from your schema
+    const linkTypes = [
+        { value: 'Website', label: 'Website', icon: <Globe className="w-5 h-5" /> },
+        { value: 'Linkedin', label: 'LinkedIn', icon: <Linkedin className="w-5 h-5" /> },
+        { value: 'GitHub', label: 'GitHub', icon: <Github className="w-5 h-5" /> },
+        { value: 'Twitter', label: 'Twitter', icon: <Twitter className="w-5 h-5" /> },
+        { value: 'Portfolio', label: 'Portfolio', icon: <Briefcase className="w-5 h-5" /> },
+        { value: 'Other', label: 'Other', icon: <LinkIcon className="w-5 h-5" /> },
+        { value: 'Email', label: 'Email', icon: <Email className="w-5 h-5" /> }
+    ];
+
+    // // Get icon for link type
+    // const getLinkIcon = (type) => {
+    //     const linkType = linkTypes.find(lt => lt.value === type);
+    //     return linkType ? linkType.icon : <LinkIcon className="w-4 h-4" />;
+    // };
+
+    // Reset form
+    const resetForm = (cancel=false) => {
+        setFormData({
+            url: '',
+            type: 'Website'
+        });
+        setErrors({});
+        if(cancel) {
+            setIsAdding(false);
+            setEditingId(null);
+        }
+    };
+
+    // Handle input change
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+        if (errors[name]) {
+            setErrors({ ...errors, [name]: '' });
+        }
+    };
+
+    // Validate form
+    const validateForm = () => {
+        const newErrors = {};
+
+        if (!formData.url.trim()) {
+            newErrors.url = 'URL is required';
+        } else {
+            // Check if URL starts with http:// or https://
+            const urlPattern = /^https?:\/\/.+/i;
+            if (!urlPattern.test(formData.url.trim())) {
+                newErrors.url = 'URL must start with http:// or https://';
+            }
+        }
+
+        // Check for duplicate URL (only when adding, not editing)
+        if (!editingId) {
+            const isDuplicate = links.some(
+                link => link.url.toLowerCase() === formData.url.trim().toLowerCase()
+            );
+            if (isDuplicate) {
+                newErrors.url = 'This URL already exists';
+            }
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    // Add link
+    const handleAdd = async () => {
+        if (!validateForm()) return;
+
+        try {
+            console.log(formData)
+            const response = await addUserData(
+                user_id, 
+                {
+                    url: formData.url.trim(),
+                    type: formData.type
+                }, 
+                "link"
+            );
+            const data = await response.json()
+            
+            if(response.status === 201){
+                const {link_id, type, url} = data.data
+                // Update user state
+                setUser(prevUser => ({
+                    ...prevUser,
+                    links: [...prevUser.links, {link_id, type, url}]
+                }));
+                // clear draft
+                resetForm();
+                toast.success(data.message);
+            } else {
+                toast.error(data.message)
+            }    
+        } catch (error) {
+            console.error('Error adding link:', error);
+            toast.error('Failed to add link');
+        }
+    };
+
+    // Start editing
+    const handleEdit = (link) => {
+        setEditingId(link.link_id);
+        setFormData({
+            url: link.url,
+            type: link.type
+        });
+        setIsAdding(false);
+    };
+
+    // Update link   (field, field_id,  reqBody)
+    const handleUpdate = async (linkId) => {
+        if (!validateForm()) return;
+
+        try {
+            const response = await updateUser(
+                "link",
+                linkId, 
+                {
+                    url: formData.url.trim(),
+                    type: formData.type
+                }
+            );
+            const data = await response.json()
+
+            if(response.status === 200){
+                const {link_id, type, url} = data.data
+                // update user state
+                setUser(prevUser => ({
+                    ...prevUser,
+                    links: prevUser.links.map(link =>
+                        link.link_id === linkId ? {link_id, type, url} : link
+                    )
+                }));
+                resetForm();
+                toast.success(data.message)
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            console.error('Error updating link:', error);
+            toast.error('Failed to update link');
+        }
+    };
+
+    // Delete link
+    const handleDelete = async (linkId) => {
+        if (!confirm('Are you sure you want to delete this link?')) return;
+
+        try {
+            const response =  await deleteUserData("link", linkId);
+            const data = await response.json()
+
+            if(response.status === 200){
+                // update user state
+                    setUser(prevUser => ({
+                    ...prevUser,
+                    links: prevUser.links.filter(link => link.link_id !== linkId)
+                }));
+
+                if (editingId === linkId) resetForm();
+                toast.success(data.message)
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            console.error('Error deleting link:', error);
+            toast.error('Failed to delete link');
+        }
+    };
+
+    // // Get display name for URL
+    // const getDisplayUrl = (url) => {
+    //     try {
+    //     const urlObj = new URL(url);
+    //     return urlObj.hostname.replace('www.', '');
+    //     } catch {
+    //     return url;
+    //     }
+    // };
+    
+    const handleClickPlus = () => {
+        resetForm();
+        setIsAdding(true);
+        setEditingId(null);
     }
+
     return (
         <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
             <div className="flex justify-between items-center mb-6">
-            <Title title="Contact & Links"/>
-            {/* <button 
-                onClick={handleEdit}
-                className="text-purple-400 hover:text-purple-300 transition-colors"
-            >
-                <Edit2 className="w-5 h-5" />
-            </button> */}
-            <EditButton {...{handleEdit}}/>
+                <Title title="Contact & Links"/>
+                {/* <button 
+                    onClick={handleEdit}
+                    className="text-purple-400 hover:text-purple-300 transition-colors"
+                >
+                    <Edit2 className="w-5 h-5" />
+                </button> */}
+                {session.user_id == user_id && <PlusButton handleClick={handleClickPlus}/>}
             </div>
-            <div className="space-y-3">
-                <div className="flex items-center gap-3 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
-                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                        <Mail className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <div className="text-white/50 text-xs">Email</div>
-                        <div className="text-purple-300 text-sm truncate">{email}</div>
-                    </div>
-                </div>
 
-                {links.map((link) => (
-                    <div key={link.link_id} className="group relative flex items-center gap-3 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
-                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                            {linkIcons[link.type]}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <div className="text-white/50 text-xs flex items-center gap-2">
-                                {link.label}
-                                {link.is_primary && <span className="text-yellow-400">⭐</span>}
+            {/* Editing/adding form */}
+            {(isAdding || editingId) && (
+                 <div className="mb-6 p-6 bg-white/5 rounded-xl border border-blue-500/30">
+                    <div className="space-y-4">
+                        {/* Link Type */}
+                        <div>
+                            <label className="block text-white/80 font-medium mb-2 text-sm">
+                                Link Type *
+                            </label>
+                            <div className="grid grid-cols-3 gap-2">
+                                {linkTypes.map((type) => (
+                                <button
+                                    key={type.value}
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, type: type.value })}
+                                    className={`flex items-center justify-center gap-2 p-3 rounded-lg border transition-all ${
+                                    formData.type === type.value
+                                        ? 'bg-blue-500/30 border-blue-500/50 text-blue-200'
+                                        : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+                                    }`}
+                                >
+                                    {type.icon}
+                                    <span className="text-sm hidden sm:inline">{type.label}</span>
+                                </button>
+                                ))}
                             </div>
-                            <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-purple-300 text-sm truncate block hover:text-purple-200">
-                                {link.url.replace(/^https?:\/\//, '')}
-                            </a>
                         </div>
-                        {editMode.links && (
-                            <button
-                                onClick={() => handleRemoveLink(link.link_id)}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-300"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                            </button>
-                        )}
-                    </div>
-                ))}
 
-                {editMode.links && (
-                    <div className="space-y-2 pt-2 border-t border-white/10">
-                    <select
-                        value={newLink.type}
-                        onChange={(e) => setNewLink({ ...newLink, type: e.target.value })}
-                        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-500"
-                    >
-                        <Option value={"website"}/>
-                        <Option value={"linkedin"}/>
-                        <Option value={"github"}/>
-                        <Option value={"twitter"}/>
-                        <Option value={"portfolio"}/>
-                        <Option value={"other"}/>
-                        {/* <option value="website" className="">Website</option>
-                        <option value="linkedin">LinkedIn</option>
-                        <option value="github">GitHub</option>
-                        <option value="twitter">Twitter</option>
-                        <option value="portfolio">Portfolio</option>
-                        <option value="other">Other</option> */}
-                    </select>
-                    <input
-                        type="url"
-                        value={newLink.url}
-                        onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
-                        placeholder="https://example.com"
-                        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-500"
-                    />
-                    <input
-                        type="text"
-                        value={newLink.label}
-                        onChange={(e) => setNewLink({ ...newLink, label: e.target.value })}
-                        placeholder="Label (optional)"
-                        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-500"
-                        maxLength={50}
-                    />
-                    <button
-                        onClick={handleAddLink}
-                        className="w-full px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:shadow-lg hover:shadow-purple-500/50 transition-all text-sm"
-                    >
-                        Add Link
-                    </button>
+                        {/* URL */}
+                        {/* <div>
+                            <label className="block text-white/80 font-medium mb-2 text-sm">
+                                URL *
+                            </label>
+                            <input
+                                type="url"
+                                name="url"
+                                value={formData.url}
+                                onChange={handleChange}
+                                placeholder="https://example.com"
+                                className={`w-full bg-white/5 border ${
+                                errors.url ? 'border-red-500/50' : 'border-white/20'
+                                } rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500`}
+                            />
+                            {errors.url && <p className="text-red-400 text-xs mt-1">{errors.url}</p>}
+                        </div> */}
+                        <InputTag 
+                            label="URL *"
+                            type="url"
+                            name="url"
+                            value={formData.url}
+                            handleChangeFunc={handleChange}
+                            placeholder="https://example.com"
+                            maxLength={255}
+                            error={errors.url}
+                        />
+                    </div>
+
+                    {/* Form Actions */}
+                    <div className="flex justify-end gap-3 mt-4">
+                        {/* <button
+                            onClick={resetForm}
+                            className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white/70 hover:bg-white/10 transition-all flex items-center gap-2"
+                        >
+                            <X className="w-4 h-4" />
+                            Cancel
+                        </button> */}
+                        <CancelButton resetForm={() => resetForm(true)}/>
+
+                        {/* <button
+                            onClick={() => editingId ? handleUpdate(editingId) : handleAdd()}
+                            className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/50 transition-all flex items-center gap-2"
+                        >
+                            <Save className="w-4 h-4" />
+                            {editingId ? 'Update' : 'Add'} Link
+                        </button> */}
+                        <SaveButton 
+                            field="Link" 
+                            handleSave={() => editingId ? handleUpdate(editingId) : handleAdd()}
+                            editingId={editingId}
+                        />
+                    </div>
                 </div>
             )}
-            </div>
-        </div>
-    )
-}
+            
+            {/* Link list */}
+            <div className="space-y-3">
+                {/* Email Link */}
+                <AnchorTag  linkTypes={linkTypes} url={email} linkType={"Email"} status={{session, user_id}}/>
 
+                {
+                    links.map((link) => (
+                    // <div
+                    //     key={link.link_id}
+                    //     className="flex items-center gap-3 p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all group"
+                    // >
+                        
+                    //     <div className="w-9 h-9 rounded-full bg-linear-to-br from-blue-500 to-cyan-500 flex items-center justify-center shrink-0 text-white">
+                    //         {getLinkIcon(link.type)}
+                    //     </div>
+                   
+                    //     <div className="flex-1 min-w-0">
+                    //         <div className="text-white/50 text-xs">{link.type}</div>
+                    //         <a
+                    //             href={link.url}
+                    //             target="_blank"
+                    //             rel="noopener noreferrer"
+                    //             className="text-blue-300 hover:text-blue-200 transition-colors truncate block font-medium"
+                    //         >
+                    //         {getDisplayUrl(link.url)}
+                    //         </a>
+                    //     </div>
+
+                    
+                    //     <MoreMenu
+                    //         onEdit={() => handleEdit(link)}
+                    //         onDelete={() => handleDelete(link.link_id)}
+                    //     />
+                    // </div>
+                    <AnchorTag 
+                        key={link.link_id} 
+                        onEdit={() => handleEdit(link)} 
+                        onDelete={() => handleDelete(link.link_id)} 
+                        url={link.url} 
+                        linkType={link.type} 
+                        status={{session, user_id}}
+                        linkTypes={linkTypes}
+                    />
+                ))
+            }
+        </div>
+    </div>
+  );
+}
 export default Links

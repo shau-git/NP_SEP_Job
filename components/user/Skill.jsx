@@ -1,7 +1,9 @@
 import React from 'react'
 import {EditButton, Title} from "@/components/user/utils/utils_config"
+import { X } from 'lucide-react';
+import {motion} from "framer-motion"
 
-const Skill = ({X, setEditMode, editMode, skills, handleRemoveSkill, newSkill, setNewSkill, handleAddSkill}) => {
+const Skill = ({session, user_id, setEditMode, editMode, skills, handleRemoveSkill, newSkill, setNewSkill, handleAddSkill}) => {
     const handleEdit = () => {
         setEditMode({ ...editMode, skills: !editMode.skills })
     }
@@ -15,23 +17,29 @@ const Skill = ({X, setEditMode, editMode, skills, handleRemoveSkill, newSkill, s
                 >
                     <Edit2 className="w-5 h-5" />
                 </button> */}
-                <EditButton {...{handleEdit}}/>
+                {session.user_id == user_id && <EditButton {...{handleEdit}}/>}
             </div>
             <div className="flex flex-wrap gap-3 mb-4">
                 {skills.map((skill) => (
                 <div key={skill.skill_id} className="group relative">
-                    <span className="px-4 py-2 bg-purple-500/20 border border-purple-500/30 rounded-full text-purple-200 hover:bg-purple-500/30 hover:border-purple-500/50 transition-all inline-block">
-                        {skill.skill}
-                    </span>
-                        {editMode.skills && (
-                    <button
-                        onClick={() => handleRemoveSkill(skill.skill_id)}
-                        className="cursor-pointer absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    <motion.span 
+                        className="px-4 py-2 bg-[rgba(102,126,234,0.2)] border border-[rgba(102,126,234,0.3)] rounded-[25px] text-[14px] text-[#b8c5ff]"
+                        whileHover={{ 
+                            backgroundColor: "rgba(102,126,234,0.3)",
+                            borderColor: "rgba(102,126,234,0.5)",
+                        }}
                     >
-                        <X className="w-4 h-4 text-white" />
-                    </button>
-                    )}
-                </div>
+                        {skill.skill}
+                    </motion.span>
+                    {editMode.skills && (
+                        <button
+                            onClick={() => handleRemoveSkill(skill.skill_id)}
+                            className="cursor-pointer absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                            <X className="w-4 h-4 text-white" />
+                        </button>
+                        )}
+                    </div>
                 ))}
             </div>
             {editMode.skills && (

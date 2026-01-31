@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth";
 import { updateUserSchema } from '@/lib/validators/validators_config';
 import { validateBody } from '@/lib/middlewares/validate';
 import bcrypt from 'bcryptjs'
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function GET(request, { params }) {
     try {
@@ -64,8 +65,8 @@ export async function GET(request, { params }) {
             },
         }
 
-        const session = getServerSession()
-        console.log("line 66 GET user", session)
+        const session = getServerSession(authOptions)
+
         if(user_id == session.user_id) {
             selectFields.company_members = {
                 select: {
@@ -109,8 +110,9 @@ export async function PUT(request, {params}) {
         let { user_id } = await params; 
         user_id = parseInt(user_id)
 
-        const session = await getServerSession();
+        const session = await getServerSession(authOptions);
         if (!session) throw new UnauthenticatedError("Login required");
+        console.log(session.user_id)
 
         if(session.user_id != user_id) throw new ForbiddenError("You can only modify your own profile!")
 
@@ -118,7 +120,6 @@ export async function PUT(request, {params}) {
         const validator = validateBody(updateUserSchema);
         const { error, value } = await validator(request);
         if(error) return error
-
 
         if(value.password) {
             // encrypt user's password before storing
@@ -132,12 +133,14 @@ export async function PUT(request, {params}) {
             data: value,
             select: {
                 user_id: true,
+                role:true,
                 name: true,
                 email: true,
                 image: true,
                 summary: true
             }
         }); 
+        console.log(updatedUser)
 
         return NextResponse.json({message: "User data updated successfully!" , data: updatedUser}, { status: 200 });
     } catch (error) {

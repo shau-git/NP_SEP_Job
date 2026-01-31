@@ -5,14 +5,14 @@ import { handleApiError } from '@/lib/api-error-handler';
 import { validateBody } from '@/lib/middlewares/validate';
 import { updateLanguageSchema} from "@/lib/validators/validators_config"
 import { getServerSession } from "next-auth";
-
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function PUT(request, { params }) {
     try {
         let { language_id } = await params;
         language_id = parseInt(language_id)
 
-        const session = await getServerSession()
+        const session = await getServerSession(authOptions)
         if (!session) {
             throw new UnauthenticatedError("Unauthorized! Please login!")
         }
@@ -53,7 +53,7 @@ export async function DELETE(request, { params }) {
         let { language_id } = await params;
         language_id = parseInt(language_id)
 
-        const session = await getServerSession()
+        const session = await getServerSession(authOptions)
         if (!session) {
             throw new UnauthenticatedError("Unauthorized! Please login!")
         }

@@ -19,6 +19,7 @@ model User {
   name    String  @db.VarChar(50)
   role String? @db.VarChar(50)
   image String? 
+  image_public_id String? @db.VarChar(255)
   email   String  @unique @db.VarChar(65)
   password String? @db.VarChar(255)
   summary String? @db.VarChar(500)

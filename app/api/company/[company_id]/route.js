@@ -5,13 +5,14 @@ import { handleApiError } from '@/lib/api-error-handler';
 import { validateBody } from '@/lib/middlewares/validate';
 import { updateCompanySchema} from "@/lib/validators/validators_config"
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function GET(request, { params }) {
     try {
         const { company_id } = await params;
         company_id = parseInt(company_id)
 
-        const session  = await getServerSession()
+        const session  = await getServerSession(authOptions)
 
         // 1. Check if the person viewing is a member of this company
         const isMember = session ? await prisma.companyMember.findFirst({
@@ -78,7 +79,7 @@ export async function PUT(request, {params}) {
         // }
 
 
-        const session = await getServerSession()
+        const session = await getServerSession(authOptions)
         if (!session) {
             throw new UnauthenticatedError("Unauthorized! Please login!")
         }

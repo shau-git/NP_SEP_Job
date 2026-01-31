@@ -5,14 +5,14 @@ import { handleApiError } from '@/lib/api-error-handler';
 import { validateBody } from '@/lib/middlewares/validate';
 import { updateEducationSchema } from "@/lib/validators/validators_config"
 import { getServerSession } from "next-auth";
-
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function PUT(request, { params }) {
     try {
         let { education_id } = await params;
         education_id = parseInt(education_id)
 
-        const session = await getServerSession()
+        const session = await getServerSession(authOptions)
         if (!session) {
             throw new UnauthenticatedError("Unauthorized! Please login!")
         }
@@ -60,7 +60,7 @@ export async function DELETE(request, { params }) {
         let { education_id } = await params;
         education_id = parseInt(education_id)
 
-        const session = await getServerSession()
+        const session = await getServerSession(authOptions)
         if (!session) {
             throw new UnauthenticatedError("Unauthorized! Please login!")
         }

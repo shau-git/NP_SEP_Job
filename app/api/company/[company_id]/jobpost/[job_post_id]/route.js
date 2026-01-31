@@ -5,12 +5,13 @@ import { handleApiError } from '@/lib/api-error-handler';
 import { validateBody } from '@/lib/middlewares/validate';
 import { updateJobPostSchema } from "@/lib/validators/validators_config"
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 // edit job post data
 export async function PUT(request, {params}) {
     try {
 
-        const session = await getServerSession()
+        const session = await getServerSession(authOptions)
 
         if (!session) {
             throw new UnauthenticatedError("Unauthorized! Please login!")

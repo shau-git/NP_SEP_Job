@@ -1,13 +1,13 @@
 import {Trash2} from "lucide-react"
 
-const DeleteButton = ({onDelete, field_id}) => {
+const DeleteButton = ({handleDelete}) => {
     return (
         <button
-            onClick={() => onDelete(field_id)}
-            className="p-2 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 hover:bg-red-500/30 transition-all"
+            onClick={handleDelete}
+            className="w-full flex items-center gap-3 px-3 py-2 text-left text-white hover:bg-red-500/20 transition-all border-t border-white/10"
             title="Delete"
         >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-4 h-4 text-red-400" />
         </button>
     )
 }

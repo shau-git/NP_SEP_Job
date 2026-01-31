@@ -5,6 +5,7 @@ import { handleApiError } from '@/lib/api-error-handler';
 import { validateBody } from '@/lib/middlewares/validate';
 import { updateJobApplicantSchema } from "@/lib/validators/validators_config"
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 // edit job applicantion data
 export async function PUT(request, { params }) {

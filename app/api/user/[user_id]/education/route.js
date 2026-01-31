@@ -5,7 +5,7 @@ import { handleApiError } from '@/lib/api-error-handler';
 import {createEducationSchema} from "@/lib/validators/validators_config"
 import { validateBody } from '@/lib/middlewares/validate';
 import { getServerSession } from "next-auth";
-
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function POST(request, {params}) {
     try {
@@ -13,7 +13,7 @@ export async function POST(request, {params}) {
         let { user_id } = await params;
         user_id = parseInt(user_id)
 
-        const session = await getServerSession()
+        const session = await getServerSession(authOptions)
         if (!session) {
             throw new UnauthenticatedError("Unauthorized! Please login!")
         }

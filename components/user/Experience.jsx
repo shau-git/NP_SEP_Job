@@ -1,24 +1,21 @@
 import {useState} from 'react'
-import {PlusButton, Title, Duration, DeleteButton, InputTag, SelectTag, CancelButton, SaveButton} from "@/components/user/utils/utils_config"
+import {PlusButton, Title, Duration, MoreMenu , InputTag, SelectTag, CancelButton, SaveButton, Description, InputEndDate} from "@/components/user/utils/utils_config"
 import { formatDate} from '@/util/formating'
 import {updateUser, addUserData, deleteUserData} from "@/util/fetchData/fetch_config"
-import {Briefcase, Trash2, Edit2, X, Save} from "lucide-react"
-import { useSession } from 'next-auth/react'
+import { toast } from "react-toastify"
 
-const Experience = ({ experiences, setUser, user_id}) => {
+const Experience = ({ session, experiences, setUser, user_id}) => {
 
-    const {data: session, status: sessionStatus} = useSession()
     const [isAdding, setIsAdding] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [errors, setErrors] = useState({});
-    
     const [formData, setFormData] = useState({
         company: '',
         role: '',
-        years: '',
+        years: '0-2',
         start_date: '',
         end_date: '',
-        employment_type: '',
+        employment_type: 'full time',
         description: ''
     });
 
@@ -27,10 +24,10 @@ const Experience = ({ experiences, setUser, user_id}) => {
         setFormData({
             company: '',
             role: '',
-            years: '',
+            years: '0-2',
             start_date: '',
             end_date: '',
-            employment_type: '',
+            employment_type: 'full time',
             description: ''
         });
         setErrors({});
@@ -97,14 +94,19 @@ const Experience = ({ experiences, setUser, user_id}) => {
             if(response.status === 200){
                 const {experience_id, company, role, years, start_date, end_date, description, employment_type} = data.data
                 // Update user state
-                setUser(prevUser => ({
-                    ...prevUser,
-                    experiences: prevUser.experiences.map(exp =>
-                        exp.experience_id === experienceId ? 
-                            {experience_id, company, role, years, start_date, end_date, description, employment_type}
-                        :    exp
-                    )
-                }));
+                setUser(prevUser => {
+                    console.log(Array.isArray(prevUser.experiences))
+                    console.log(prevUser)
+                    console.log("experience",prevUser.experiences)
+                    return {
+                        ...prevUser,
+                        experiences: prevUser.experiences.map(exp =>
+                            exp.experience_id === experienceId ? 
+                                {experience_id, company, role, years, start_date, end_date, description, employment_type}
+                            :    exp
+                        )
+                    }
+            });
                 // clear draft
                 resetForm();
                 toast.success(data.message);
@@ -130,7 +132,10 @@ const Experience = ({ experiences, setUser, user_id}) => {
                 // Update user state
                 setUser(prevUser => ({
                     ...prevUser,
-                    experiences: [...prevUser.experiences, {experience_id, company, role, years, start_date, end_date, description, employment_type}]
+                    experiences: [
+                        ...(prevUser.experiences || []), // Spreads existing items, or an empty array if undefined, 
+                        {experience_id, company, role, years, start_date, end_date, description, employment_type}
+                    ]
                 }))
                 // clear draft
                 resetForm();
@@ -149,7 +154,7 @@ const Experience = ({ experiences, setUser, user_id}) => {
         if (!confirm('Are you sure you want to delete this experience?')) return;
     
         try {
-            const response =  await deleteUserData(skill_id, "skills");
+            const response =  await deleteUserData("experience", experienceId);
             const data = await response.json()
 
             if(response.status === 200){
@@ -192,7 +197,7 @@ const Experience = ({ experiences, setUser, user_id}) => {
                 {/* <button className="text-purple-400 hover:text-purple-300 transition-colors cursor-pointer">
                     <Plus className="w-5 h-5" />
                 </button> */}
-                <PlusButton handleClick={handleClickPlus}/>
+                {(session.user_id == user_id) && <PlusButton handleClick={handleClickPlus}/>}
             </div>
 
             {/* Add/Edit Form */}
@@ -248,8 +253,8 @@ const Experience = ({ experiences, setUser, user_id}) => {
                         </div> */}
                         <InputTag 
                             label="Role *"
-                            type="role"
-                            name="company"
+                            type="text"
+                            name="role"
                             value={formData.role}
                             handleChangeFunc={handleChange}
                             placeholder="e.g., Senior Developer"
@@ -331,7 +336,7 @@ const Experience = ({ experiences, setUser, user_id}) => {
                         />
 
                         {/* End Date */}
-                        <div>
+                        {/* <div>
                             <label className="block text-white/80 font-medium mb-2 text-sm">
                                 End Date *
                             </label>
@@ -362,10 +367,16 @@ const Experience = ({ experiences, setUser, user_id}) => {
                                 </button>
                             </div>
                             {errors.end_date && <p className="text-red-400 text-xs mt-1">{errors.end_date}</p>}
-                        </div>
+                        </div> */}
+                        <InputEndDate
+                            handleChange={handleChange}
+                            errors={errors}
+                            formData={formData}
+                            setFormData={setFormData}
+                        />
 
                         {/* Description */}
-                        <div className="md:col-span-2">
+                        {/* <div className="md:col-span-2">
                             <label className="block text-white/80 font-medium mb-2 text-sm">
                                 Description *
                             </label>
@@ -384,7 +395,15 @@ const Experience = ({ experiences, setUser, user_id}) => {
                                 {errors.description && <p className="text-red-400 text-xs">{errors.description}</p>}
                                 <p className="text-white/40 text-xs ml-auto">{formData.description.length}/500</p>
                             </div>
-                        </div>
+                        </div> */}
+                        <Description
+                            value={formData.description}
+                            handleChange={handleChange}
+                            placeholder="Describe your role and achievements..."
+                            maxLength={500}
+                            rows={4}
+                            errors={errors}
+                        />
                     </div>
 
                     {/* Form Actions */}
@@ -426,14 +445,17 @@ const Experience = ({ experiences, setUser, user_id}) => {
                         className="border-b border-white/10 pb-6 last:border-0 group"
                     >
                         <div className="flex gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-linear-to-br from-purple-500 to-pink-500 flex items-center justify-center text-2xl flex-shrink-0">
-                                <Briefcase className="w-6 h-6 text-white" />
+                            {/* Icon */}
+                            <div className="w-12 h-12 rounded-xl bg-linear-to-br from-[rgb(102,126,234)] to-[rgb(118,75,162)] flex items-center justify-center text-2xl flex-shrink-0">
+                                🚀
                             </div>
+
+                            {/* Experience data */}
                             <div className="flex-1">
                                 <div className="flex justify-between items-start mb-2">
                                     <div>
                                         <h3 className="text-xl font-semibold text-white">{exp.role}</h3>
-                                        <div className="text-purple-400 font-semibold">{exp.company}</div>
+                                        <div className="text-[rgb(102,126,234)] font-semibold">{exp.company}</div>
                                         <div className="text-white/50 text-sm mb-3">
                                             {formatDate(exp.start_date)} - {formatDate(exp.end_date)} · {exp.years} years
                                         </div>
@@ -444,23 +466,15 @@ const Experience = ({ experiences, setUser, user_id}) => {
                                         </div> */}
                                         <Duration design="bg-purple-500/20 border-purple-500/30 " duration={exp.employment_type}/>
                                     </div>
-                                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button
-                                            onClick={() => handleEdit(exp)}
-                                            className="p-2 bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-300 hover:bg-blue-500/30 transition-all"
-                                            title="Edit"
-                                        >
-                                            <Edit2 className="w-4 h-4" />
-                                        </button>
-                                        {/* <button
-                                            onClick={() => handleDelete(exp.experience_id)}
-                                            className="p-2 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 hover:bg-red-500/30 transition-all"
-                                            title="Delete"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button> */}
-                                        <DeleteButton onDelete={handleDelete} field_id={exp.experience_id}/>
-                                    </div>
+
+                                    {/* button to toogle edit & delete */}
+                                    {
+                                        (session.user_id == user_id) &&  
+                                            <MoreMenu
+                                                onEdit={() => handleEdit(exp)}
+                                                onDelete={() => handleDelete(exp.experience_id)}
+                                            />
+                                    }
                                 </div>
                                 <p className="text-white/70 leading-relaxed">{exp.description}</p>
                             </div>

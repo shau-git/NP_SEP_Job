@@ -2,9 +2,11 @@ import React from 'react'
 import { formatSalary, formatEmploymentType, getDaysAgo } from '@/util/formating'
 import {motion} from "framer-motion"
 import { MapPin , Clock,  Building2} from "lucide-react";
+import { useRouter } from 'next/navigation';
 
 const JobCards = ({data}) => {
-    const {title, employment_type, salary_start, salary_end, experience, location, summary, company, created_at, industry} = data
+    const router = useRouter();
+    const {job_post_id, title, employment_type, salary_start, salary_end, experience, location, summary, company, created_at, industry} = data
     const fallback = company.image?false:true
     return (
         <motion.div 
@@ -46,7 +48,7 @@ const JobCards = ({data}) => {
                     
                     {/* Job Info */}
                     <div>
-                        <h3 className="text-xl font-semibold mb-1">{title}</h3>
+                        <h3 className="text-xl font-bold mb-1 text-purple-400 ">{title}</h3>
                         <div className="text-slate-400 text-sm">{company.name}</div>
                     </div>
                 </div>
@@ -59,10 +61,10 @@ const JobCards = ({data}) => {
             <p className="text-slate-300 mb-5 leading-relaxed text-sm">{summary}</p>
 
             <div className="flex flex-wrap gap-2 mb-5">
-                <span className="flex items-center justify-center px-3 py-1 bg-purple-500/20 border border-purple-500/30 rounded-full text-xs text-purple-200 capitalize">
+                <span className="flex items-center justify-center px-3 py-1 bg-[rgba(102,126,234,0.2)] border border-purple-500/30 rounded-full text-xs text-purple-200 capitalize">
                     <MapPin className="mr-1 w-3 h-3"/> {location}
                 </span>
-                <span className="flex items-center justify-center px-3 py-1 bg-purple-500/20 border border-purple-500/30 rounded-full text-xs text-purple-200 capitalize">
+                <span className="flex items-center justify-center px-3 py-1 bg-pink-500/20 border-pink-500/30 rounded-full text-xs text-purple-200 capitalize">
                     <Clock className="mr-1 w-3 h-3"/> {formatEmploymentType(employment_type)}
                 </span>
                 <span className="px-3 py-1 bg-green-500/20 border border-green-500/30 rounded-full text-xs text-green-200">${formatSalary(salary_start)} - ${formatSalary(salary_end)}</span>
@@ -75,8 +77,8 @@ const JobCards = ({data}) => {
                 <div className="text-sm text-slate-400">
                     Exp: {experience} years
                 </div>
-                <button className="px-4 py-2 bg-linear-to-r from-purple-500 to-pink-500 rounded-lg text-sm font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all">
-                    Apply Now
+                <button onClick={() => router.push(`/job_post/${job_post_id}`)} className="px-4 py-2  bg-[#667eea] rounded-lg text-sm font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all">
+                    Visit
                 </button>
             </div>
         </motion.div>

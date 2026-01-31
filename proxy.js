@@ -23,8 +23,9 @@ export async function proxy(request) {
     try {
         if (base) {
             const segments = pathname.split('/'); 
-            // segments[0] = "", [1] = "api", [2] = "route_name", [3] = "id"
-            const route = segments[2];
+            // segments[0] = "" , [1] = "api", [2] = "route_name", [3] = "id"
+            // eg: /api/user/1
+            const route = segments[2]; //eg: user (route_name)
             const id_check = segments[3]; 
             
             // 2. ID Validation (Fast integer check)
@@ -48,7 +49,7 @@ export async function proxy(request) {
                     company: { model: prisma.company, field: 'company_id' }
                 };
 
-                const target = modelMapping[route];
+                const target = modelMapping[route]; //eg: modelMapping[user]
                 
                 // check if the id exist
                 if (target) {

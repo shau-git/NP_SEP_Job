@@ -5,6 +5,7 @@ import { handleApiError } from '@/lib/api-error-handler';
 import { validateBody } from '@/lib/middlewares/validate';
 import { createJobPostSchema } from "@/lib/validators/validators_config"
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 // post new job post
 export async function POST(request, {params}) {
@@ -12,7 +13,7 @@ export async function POST(request, {params}) {
         let { company_id } = await params;
         company_id = parseInt(company_id)
 
-        const session = await getServerSession()
+        const session = await getServerSession(authOptions)
 
         if (!session) {
             throw new UnauthenticatedError("Unauthorized! Please login!")

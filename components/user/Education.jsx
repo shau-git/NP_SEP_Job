@@ -1,24 +1,22 @@
 import {useState, useEffect} from 'react'
-import {PlusButton, Title, Duration, DeleteButton, InputTag, SelectTag, CancelButton, SaveButton, Description} from "@/components/user/utils/utils_config"
+import {PlusButton, Title, Duration, InputTag, SelectTag, CancelButton, SaveButton, Description, MoreMenu, InputEndDate} from "@/components/user/utils/utils_config"
 import { formatDate} from '@/util/formating'
 import {updateUser, addUserData, deleteUserData} from "@/util/fetchData/fetch_config"
-import {Briefcase, Trash2, Edit2, X, Save} from "lucide-react"
+import {Briefcase, Trash2, Edit2, X, Save, MoreVertical} from "lucide-react"
 import { useSession } from 'next-auth/react'
+import { toast } from "react-toastify"
 
-const Education = ({educations, setUser, user_id}) => {
-
-    const {data: session, status: sessionStatus} = useSession()
+const Education = ({session, educations, setUser, user_id}) => {
     const [isAdding, setIsAdding] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [errors, setErrors] = useState({});
-
     const [formData, setFormData] = useState({
         institution: '',
         field_of_study: '',
-        qualification: '',
+        qualification: 'Primary School',
         start_date: '',
         end_date: '',
-        study_type: '',
+        study_type: 'full time',
         description: ''
     });
 
@@ -38,10 +36,10 @@ const Education = ({educations, setUser, user_id}) => {
         setFormData({
             institution: '',
             field_of_study: '',
-            qualification: '',
+            qualification: 'Primary School',
             start_date: '',
             end_date: '',
-            study_type: '',
+            study_type: 'full time',
             description: ''
         });
         setErrors({});
@@ -77,7 +75,7 @@ const Education = ({educations, setUser, user_id}) => {
         }
 
         if (!formData.description.trim()) newErrors.description = 'Description is required';
-        else if (formData.description.length > 300) newErrors.description = 'Max 300 characters';
+        else if (formData.description.length > 500) newErrors.description = 'Max 500 characters';
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -86,11 +84,11 @@ const Education = ({educations, setUser, user_id}) => {
     // Add education
     const handleAdd = async () => {
         if (!validateForm()) return;
+        console.log(formData)
 
         try {
             const response = await addUserData(user_id, formData, "education");
             const data = await response.json()
-
 
             if(response.status === 201){
                 const {education_id, institution, field_of_study, qualification, start_date, end_date, study_type, description} = data.data
@@ -148,7 +146,7 @@ const Education = ({educations, setUser, user_id}) => {
         if (!confirm('Are you sure you want to delete this education record?')) return;
 
         try {
-            const response =  await deleteUserData(educationId, "education");
+            const response =  await deleteUserData("education", educationId);
             const data = await response.json()
 
             if(response.status === 200){
@@ -177,7 +175,7 @@ const Education = ({educations, setUser, user_id}) => {
             field_of_study: edu.field_of_study,
             qualification: edu.qualification,
             start_date: edu.start_date.split('T')[0],
-            end_date: edu.end_date.split('T')[0],
+            end_date: edu.end_date === 'present' ? 'present' : edu.end_date.split('T')[0],
             study_type: edu.study_type,
             description: edu.description
         });
@@ -188,7 +186,7 @@ const Education = ({educations, setUser, user_id}) => {
         editingId ? handleUpdate(editingId) : handleAdd()
     }
 
-    const handleClickPlus = () => {
+    const handleClickAdd = () => {
         resetForm();
         setIsAdding(true);
         setEditingId(null);
@@ -201,7 +199,7 @@ const Education = ({educations, setUser, user_id}) => {
                 {/* <button className="text-purple-400 hover:text-purple-300 transition-colors cursor-pointer">
                     <Plus className="w-5 h-5" />
                 </button> */}
-                <PlusButton handleClick={handleClickPlus}/>
+                {(session.user_id == user_id) &&  <PlusButton handleClick={handleClickAdd}/>}
             </div>
 
             {/* Add/Edit Form */}
@@ -342,7 +340,7 @@ const Education = ({educations, setUser, user_id}) => {
                         />
 
                         {/* End Date */}
-                        <div>
+                        {/* <div>
                             <label className="block text-white/80 font-medium mb-2 text-sm">
                                 End Date *
                             </label>
@@ -374,7 +372,13 @@ const Education = ({educations, setUser, user_id}) => {
                             </div>
                             
                             {errors.end_date && <p className="text-red-400 text-xs mt-1">{errors.end_date}</p>}
-                        </div>
+                        </div> */}
+                        <InputEndDate
+                            handleChange={handleChange}
+                            errors={errors}
+                            formData={formData}
+                            setFormData={setFormData}
+                        />
 
                         {/* Description */}
                         {/* <div className="md:col-span-2">
@@ -401,7 +405,7 @@ const Education = ({educations, setUser, user_id}) => {
                             value={formData.description}
                             handleChange={handleChange}
                             placeholder="Describe your studies, achievements, courses..."
-                            maxLength={300}
+                            maxLength={500}
                             rows={3}
                             errors={errors}
                         />
@@ -446,14 +450,14 @@ const Education = ({educations, setUser, user_id}) => {
                             className="border-b border-white/10 pb-6 last:border-0 group"
                         >
                             <div className="flex gap-4">
-                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-orange-500 flex items-center justify-center text-2xl flex-shrink-0">
-                                🎓
+                                <div className="w-12 h-12 rounded-xl bg-linear-to-br from-[rgb(240,147,251)] to-[rgb(245,87,108)] flex items-center justify-center text-2xl flex-shrink-0">
+                                    🎓
                                 </div>
                                 <div className="flex-1">
                                     <div className="flex justify-between items-start mb-2">
                                         <div>
                                             <h3 className="text-lg font-semibold text-white mb-1">{edu.qualification}</h3>
-                                            <div className="text-pink-400 font-semibold mb-1">{edu.institution}</div>
+                                            <div className="text-[rgb(240,147,251)] font-semibold mb-1">{edu.institution}</div>
                                             <div className="text-white/70 text-sm mb-2">{edu.field_of_study}</div>
                                             <div className="text-white/50 text-sm mb-3">
                                                 {formatDate(edu.start_date)} - {formatDate(edu.end_date)}
@@ -465,23 +469,58 @@ const Education = ({educations, setUser, user_id}) => {
                                             </div> */}
                                             <Duration design="bg-pink-500/20 border-pink-500/30" duration={edu.study_type}/>
                                         </div>
-                                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+
+                                        {/* Menu Button */}    {/* Dropdown Menu */}
+                                        {/* <div className="relative shrink-0">
                                             <button
-                                                onClick={() => handleEdit(edu)}
-                                                className="p-2 bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-300 hover:bg-blue-500/30 transition-all"
-                                                title="Edit"
+                                                onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleMenu(edu.education_id);
+                                                }}
+                                                className="p-2 hover:bg-white/10 rounded-lg transition-all"
+                                                title="Options"
                                             >
-                                                <Edit2 className="w-4 h-4" />
+                                                <MoreVertical className="w-5 h-5 text-white/60" />
                                             </button>
-                                            {/* <button
-                                                onClick={() => handleDelete(edu.education_id)}
-                                                className="p-2 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 hover:bg-red-500/30 transition-all"
-                                                title="Delete"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button> */}
-                                            <DeleteButton onDelete={handleDelete} field_id={edu.education_id}/>
-                                        </div>
+
+                                           
+                                            {activeMenuId === edu.education_id && (
+                                                <div 
+                                                    className="absolute right-0 top-10 bg-slate-800/95 backdrop-blur-lg border border-white/20 rounded-xl shadow-2xl overflow-hidden z-10 min-w-[140px]"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <button
+                                                        onClick={() => {
+                                                            handleEdit(edu);
+                                                            setActiveMenuId(null);
+                                                        }}
+                                                        className="w-full flex items-center gap-3 px-4 py-3 text-left text-white hover:bg-blue-500/20 transition-all"
+                                                    >
+                                                        <Edit2 className="w-4 h-4 text-blue-400" />
+                                                        <span>Edit</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                        handleDelete(edu.education_id);
+                                                        setActiveMenuId(null);
+                                                        }}
+                                                        className="w-full flex items-center gap-3 px-4 py-3 text-left text-white hover:bg-red-500/20 transition-all border-t border-white/10"
+                                                    >
+                                                        <Trash2 className="w-4 h-4 text-red-400" />
+                                                        <span>Delete</span>
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div> */}
+                                        {/* MoreMenu Component */}
+                                        {
+                                            (session.user_id == user_id) &&  
+                                            <MoreMenu
+                                                onEdit={() => handleEdit(edu)}
+                                                onDelete={() => handleDelete(edu.education_id)}
+                                            />
+                                        }
+                                        
                                     </div>
                                     <p className="text-white/70 leading-relaxed">{edu.description}</p>
                                 </div>

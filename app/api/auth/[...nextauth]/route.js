@@ -11,14 +11,11 @@ export const authOptions = {
 		CredentialsProvider({
 			name: 'credentials',
 			credentials: {
-				email: { label: "Email", type: "email" },
-				password: { label: "Password", type: "password" }
+				email: { label: "email", type: "email" },
+				password: { label: "password", type: "password" }
 			},
 
 			async authorize(credentials) {
-				// Connect to database
-				await connectDB()
-
 				// Find user by email
 				//const mongiUser = await User.findOne({ email: credentials.email })
 
@@ -97,22 +94,20 @@ export const authOptions = {
 		},
 
 
-		async jwt({ token, user }) {
+		async jwt({ token, user, account, trigger }) {
 			console.log("jwt token line 101:: ", token)
 			console.log("jwt user line 102:: ", user)
+			console.log("the acc line 103", account)
 			// Initial sign in
 			if (user) {
-				// For Credentials, ID is already user_id
-				// For OAuth, we need the database ID if it wasn't in the user object
-				if (account?.provider !== "credentials") {
-					const dbUser = await prisma.user.findUnique({
-						where: { email: user.email }
-					});
-					token.id = dbUser?.user_id;
-				} else {
-					token.id = user.id;
-				}
+				const dbUser = await prisma.user.findUnique({
+					where: { email: user.email }
+				});
+				token.id = dbUser?.user_id;
+				token.picture = dbUser?.image
+				
 			}
+			console.log('token line 115', token)
 			return token;
 		},
 
@@ -136,7 +131,8 @@ export const authOptions = {
 	secret: process.env.NEXTAUTH_SECRET, 
 
 	pages: {
-		signIn: '/login', // Custom login page 
+		signIn: '/', // Redirects to your home page instead of /api/auth/signin
+    	error: '/',  // Redirects login errors back to your home page
 	},
 }
 

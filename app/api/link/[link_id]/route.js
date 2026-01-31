@@ -5,14 +5,14 @@ import { handleApiError } from '@/lib/api-error-handler';
 import { validateBody } from '@/lib/middlewares/validate';
 import { updateLinkSchema} from "@/lib/validators/validators_config"
 import { getServerSession } from "next-auth";
-
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function PUT(request, { params }) {
     try {
         let { link_id } = await params;
         link_id = parseInt(link_id)
 
-        const session = await getServerSession()
+        const session = await getServerSession(authOptions)
         if (!session) {
             throw new UnauthenticatedError("Unauthorized! Please login!")
         }
@@ -53,7 +53,7 @@ export async function DELETE(request, { params }) {
         let { link_id } = await params;
         link_id = parseInt(link_id)
 
-        const session = await getServerSession()
+        const session = await getServerSession(authOptions)
         if (!session) {
             throw new UnauthenticatedError("Unauthorized! Please login!")
         }

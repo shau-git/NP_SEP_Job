@@ -5,12 +5,13 @@ import { handleApiError } from '@/lib/api-error-handler';
 import { validateBody } from '@/lib/middlewares/validate';
 import { createJobApplicantsSchema } from "@/lib/validators/validators_config"
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 // company member to view job applicant
 export async function GET(request, {params}) {
     try {
         // 1. Concurrent Parsing & Session Check
-        const [param_id, session] = await Promise.all([params, getServerSession()]);
+        const [param_id, session] = await Promise.all([params, getServerSession(authOptions)]);
         if (!session) throw new UnauthenticatedError("Unauthorized! Please login!"); 
         
         // company_id type validated in /proxy.js
@@ -60,7 +61,7 @@ export async function GET(request, {params}) {
 // apply job
 export async function POST(request, {params}) {
     try {
-        const [param_id, session] = await Promise.all([params, getServerSession()]);
+        const [param_id, session] = await Promise.all([params, getServerSession(authOptions)]);
         if (!session) throw new UnauthenticatedError("Unauthorized! Please login!"); 
         
         const company_id = parseInt(param_id.company_id);

@@ -5,14 +5,14 @@ import { handleApiError } from '@/lib/api-error-handler';
 import { validateBody } from '@/lib/middlewares/validate';
 import { updateSkillSchema} from "@/lib/validators/validators_config"
 import { getServerSession } from "next-auth";
-
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function PUT(request, { params }) {
     try {
         let { skill_id } = await params;
         skill_id = parseInt(skill_id)
 
-        const session = await getServerSession()
+        const session = await getServerSession(authOptions)
         if (!session) {
             throw new UnauthenticatedError("Unauthorized! Please login!")
         }
@@ -28,7 +28,6 @@ export async function PUT(request, { params }) {
         // validate req body
         const validator = validateBody(updateSkillSchema);
         const { error, value } = await validator(request);
-
         if(error) return error
 
         // only user themselve can modify their own record
@@ -50,10 +49,10 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
     try {
-        const { skill_id } = await params;
+        let { skill_id } = await params;
         skill_id = parseInt(skill_id)
 
-        const session = await getServerSession()
+        const session = await getServerSession(authOptions)
         if (!session) {
             throw new UnauthenticatedError("Unauthorized! Please login!")
         }

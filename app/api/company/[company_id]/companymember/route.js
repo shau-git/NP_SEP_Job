@@ -5,7 +5,7 @@ import { handleApiError } from '@/lib/api-error-handler';
 import {createCompanyMemberSchema} from "@/lib/validators/validators_config"
 import { validateBody } from '@/lib/middlewares/validate';
 import { getServerSession } from "next-auth";
-
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function GET() {
     try {
@@ -20,7 +20,7 @@ export async function GET() {
         //     throw new NotFoundError(`Company id ${company_id} not found`)
         // }
         
-        const session = getServerSession()
+        const session = getServerSession(authOptions)
 
         if (!session) {
             throw new UnauthenticatedError("Unauthorized! Please login!")
@@ -78,7 +78,7 @@ export async function POST(request, { params }) {
         let { company_id } = await params;
         company_id = parseInt(company_id);
 
-        const session = await getServerSession();
+        const session = await getServerSession(authOptions);
         if (!session) throw new UnauthenticatedError("Unauthorized! Please login!");
 
         const admin_id = parseInt(session.user_id);

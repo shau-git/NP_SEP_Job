@@ -5,14 +5,14 @@ import { handleApiError } from '@/lib/api-error-handler';
 import { validateBody } from '@/lib/middlewares/validate';
 import { updateExperienceSchema} from "@/lib/validators/validators_config"
 import { getServerSession } from "next-auth";
-
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function PUT(request, { params }) {
     try {
         let { experience_id } = await params;
         experience_id = parseInt(experience_id)
 
-        const session = await getServerSession()
+        const session = await getServerSession(authOptions)
         if (!session) {
             throw new UnauthenticatedError("Unauthorized! Please login!")
         }
@@ -30,6 +30,11 @@ export async function PUT(request, { params }) {
             throw new NotFoundError(`Experience id ${experience_id} record not found!`)
         }
 
+        if (value.end_date instanceof Date) {
+            // This turns the Object back into "2020-12-31" so the DB accepts it
+            value.end_date = value.end_date.toISOString().split('T')[0];
+        }
+        
         // only user themselve can modify their own record
         if(record.user_id == session.user_id) {
             const data = await prisma.experience.update({
@@ -53,7 +58,7 @@ export async function DELETE(request, { params }) {
         let { experience_id } = await params;
         experience_id = parseInt(experience_id)
 
-        const session = await getServerSession()
+        const session = await getServerSession(authOptions)
         if (!session) {
             throw new UnauthenticatedError("Unauthorized! Please login!")
         }

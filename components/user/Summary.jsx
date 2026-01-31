@@ -1,7 +1,7 @@
 import React from 'react'
 import {EditButton, Title} from "@/components/user/utils/utils_config"
 
-const Summary = ({handleEditSummary, handleSaveSummary,handleCancelSummary,  editMode, summaryDraft, summary}) => {
+const Summary = ({session, user_id, handleEditSummary, handleSaveSummary,handleCancelSummary,  editMode, summaryDraft, setSummaryDraft, summary}) => {
     return (
         <div className="bg-white/5 backdrop-blur-xl rounded-2xl py-6 px-7 border border-white/10">
             <div className="flex justify-between items-center mb-4">
@@ -12,13 +12,13 @@ const Summary = ({handleEditSummary, handleSaveSummary,handleCancelSummary,  edi
                 >
                     <Edit2 className="w-5 h-5 cursor-pointer" />
                 </button> */}
-                <EditButton handleEdit={handleEditSummary}/>
+                {session.user_id == user_id && <EditButton handleEdit={handleEditSummary}/>}
             </div>
             { editMode.summary ? (
                 <div>
                     <textarea
                         value={summaryDraft}
-                        onChange={handleSaveSummary}
+                        onChange={(e) => setSummaryDraft(e.target.value)}
                         className="w-full bg-white/5 border border-white/10 rounded-lg p-4 text-white/90 min-h-32 focus:outline-none focus:border-purple-500"
                         maxLength={500}
                     />
