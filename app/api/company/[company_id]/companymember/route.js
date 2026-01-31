@@ -9,7 +9,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function GET() {
     try {
-        const { company_id } = await params;
+        let { company_id } = await params;
         company_id = parseInt(company_id)
 
         // const company = await prisma.company.findFirst({
