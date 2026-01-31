@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack",
-    "build": "next build && prisma generate --webpack",
-    "start": "next start --webpack",
+    "dev": "next dev --turbopack",
+    "build": "next build && prisma generate --turbopack",
+    "start": "next start --turbopack",
     "lint": "eslint",
     "postinstall": "prisma generate"
   },
